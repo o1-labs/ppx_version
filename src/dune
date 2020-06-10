@@ -19,9 +19,10 @@
             ppx_enumerate
             ppx_fields_conv
             ppx_hash
-            ppx_deriving_yojson))
+            ppx_deriving_yojson)
+ (preprocess (pps ppxlib.metaquot)))
 
-(executable
+ (executable
  (name print_binable_functors)
  (modules print_binable_functors)
  (libraries ppx_version
@@ -34,4 +35,5 @@
             ppx_enumerate
             ppx_fields_conv
             ppx_hash
-            ppx_deriving_yojson))
+            ppx_deriving_yojson)
+ (preprocess (pps ppxlib.metaquot)))
