@@ -22,7 +22,7 @@
             ppx_deriving_yojson)
  (preprocess (pps ppxlib.metaquot)))
 
- (executable
+(executable
  (name print_binable_functors)
  (modules print_binable_functors)
  (libraries ppx_version

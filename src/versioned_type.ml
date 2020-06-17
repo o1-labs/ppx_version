@@ -544,17 +544,19 @@ let str_type_decl :
     let open Ppxlib.Deriving.Args in
     empty +> flag "rpc" +> flag "asserted" +> flag "binable"
   in
-  let deriver =
-    choose_deriver ~printing:Printing.print_type
-      ~deriving:Deriving.generate_let_bindings_for_type_decl_str
+  let deriver ~loc ~path (rec_flag, type_decls) rpc asserted binable =
+    (choose_deriver ~printing:Printing.print_type
+       ~deriving:Deriving.generate_let_bindings_for_type_decl_str)
+      ~loc ~path (rec_flag, type_decls) rpc asserted binable
   in
   Ppxlib.Deriving.Generator.make args deriver
 
 let sig_type_decl :
     (signature, rec_flag * type_declaration list) Ppxlib.Deriving.Generator.t =
-  let deriver =
-    choose_deriver ~printing:Printing.gen_empty_sig
-      ~deriving:Deriving.generate_val_decls_for_type_decl_sig
+  let deriver ~loc ~path (rec_flag, type_decls) =
+    (choose_deriver ~printing:Printing.gen_empty_sig
+       ~deriving:Deriving.generate_val_decls_for_type_decl_sig)
+      ~loc ~path (rec_flag, type_decls)
   in
   Ppxlib.Deriving.Generator.make_noarg deriver
 

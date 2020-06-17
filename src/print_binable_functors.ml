@@ -96,4 +96,5 @@ let preprocess_impl str =
 
 let () =
   Ppxlib.Driver.register_transformation name ~preprocess_impl ;
+  Ppx_version.Dummy_derivers.add_type_ext_aliases ["register_event"] ;
   Ppxlib.Driver.standalone ()
