@@ -1,7 +1,5 @@
 (* dummy_derivers.ml -- create no-op derivers *)
 
-open Core_kernel
-
 (* type declarations *)
 let type_decl_gen0 ~loc:_ ~path:_ _(_rec_flag,_type_decls) = []
 let type_decl_gen1 ~loc:_ ~path:_ _(_rec_flag,_type_decls) _ = []
