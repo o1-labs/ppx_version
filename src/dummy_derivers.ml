@@ -1,11 +1,11 @@
 (* dummy_derivers.ml -- create no-op derivers *)
 
 (* type declarations *)
-let type_decl_gen0 ~loc:_ ~path:_ _(_rec_flag,_type_decls) = []
-let type_decl_gen1 ~loc:_ ~path:_ _(_rec_flag,_type_decls) _ = []
-let type_decl_gen2 ~loc:_ ~path:_ _(_rec_flag,_type_decls) _ _ = []
-let type_decl_gen3 ~loc:_ ~path:_ _(_rec_flag,_type_decls) _ _ _ = []
-let type_decl_gen4 ~loc:_ ~path:_ _(_rec_flag,_type_decls) _ _ _ _ = []
+let type_decl_gen0 ~loc:_ ~path:_ (_rec_flag,_type_decls) = []
+let type_decl_gen1 ~loc:_ ~path:_ (_rec_flag,_type_decls) _ = []
+let type_decl_gen2 ~loc:_ ~path:_ (_rec_flag,_type_decls) _ _ = []
+let type_decl_gen3 ~loc:_ ~path:_ (_rec_flag,_type_decls) _ _ _ = []
+let type_decl_gen4 ~loc:_ ~path:_ (_rec_flag,_type_decls) _ _ _ _ = []
 
 let add_type_decl_no_op name args generator =
   let str_type_decl = Ppxlib.Deriving.Generator.make args generator in
