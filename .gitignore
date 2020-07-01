@@ -1,2 +1,4 @@
+.bazel
+user.bazelrc
 _build
 *.merlin
