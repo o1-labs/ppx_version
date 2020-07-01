@@ -74,7 +74,7 @@ ppx_module( name = "versioned_util_cm", impl = "src/versioned_util.ml",
 ## Now link ns module and submodules into archive.
 ppx_archive(
     name = "ppx_version",
-    message = "Compiling ppx_version...",
+    msg  = "Compiling ppx_version...",
     deps = [
         "@opam//pkg:compiler-libs.common",
         "@opam//pkg:ppxlib",
