@@ -1,4 +1,4 @@
-load("@obazl//ocaml:build.bzl",
+load("@obazl_rules_ocaml//ocaml:build.bzl",
      "ppx_binary",
      "ppx_archive",
      "ppx_module",
@@ -21,7 +21,8 @@ SUBMODULE_OPTS = [
     "-c",
     "-predicates", "ppx_deriving",
     "-no-alias-deps", "-opaque",
-    "-verbose"]
+    # "-verbose"
+]
 
 ## Compile the ns module.  No preprocessing.
 
@@ -96,7 +97,7 @@ ppx_binary(
     name = "ppx_version.exe",
     opts = ["-linkpkg",
             "-linkall",
-            "-verbose",
+            # "-verbose",
     ],
     deps = [":ppx_version",
             "@opam//pkg:compiler-libs.common",
@@ -125,7 +126,7 @@ ppx_binary(
             "-predicates", "ppx_deriving",
             "-predicates", "ppx_driver",
             "-linkpkg",
-            "-verbose",
+            # "-verbose",
     ],
     deps = [
         "@opam//pkg:core_kernel",
