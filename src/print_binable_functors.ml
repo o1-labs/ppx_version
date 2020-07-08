@@ -96,9 +96,7 @@ let preprocess_impl str =
 
 let () =
   Ppxlib.Driver.register_transformation name ~preprocess_impl ;
-  let register_event_args =
-    let open Ppxlib.Deriving.Args in
-    empty +> arg "msg" __
-  in
-  Ppx_version.Dummy_derivers.add_type_ext1 "register_event" register_event_args;
+  let register_event_arg = Ppxlib.Deriving.Args.(arg "msg" __) in
+  Ppx_version.Dummy_derivers.add_type_ext1 "register_event" register_event_arg;
+  Ppx_version.Dummy_derivers.add_type_ext "dhall_type";
   Ppxlib.Driver.standalone ()
