@@ -3,6 +3,8 @@
 open Core_kernel
 open Ppxlib
 
+let parse_opt = Ast_pattern.parse ~on_error:(fun () -> None)
+
 let mk_loc ~loc txt = {Location.loc; txt}
 
 let map_loc ~f {Location.loc; txt} = {Location.loc; txt= f txt}

@@ -5,8 +5,6 @@ open Versioned_util
 (* option to `deriving version' *)
 type version_option = No_version_option | Asserted | Binable
 
-let parse_opt = Ast_pattern.parse ~on_error:(fun () -> None)
-
 (* TODO: Check if we need to optcomp this for 4.08 support. *)
 (*
 let create_attr ~loc attr_name attr_payload =
@@ -65,11 +63,7 @@ let rec add_deriving ~loc ~version_option attributes =
           in
           let has_version =
             List.exists args ~f:(fun arg ->
-                match parse_opt special_version loc arg (fun _ -> Some ()) with
-                | None ->
-                    false
-                | Some () ->
-                    true )
+                Option.is_some @@ parse_opt special_version loc arg (fun _ -> Some ()))
           in
           let needs_bin_io =
             match version_option with
