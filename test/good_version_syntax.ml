@@ -11,5 +11,14 @@ module Stable = struct
   end
 end]
 
+(* version with an argument *)
+module M = struct
+  module V1 = struct
+    module T = struct
+      type query = Core_kernel.Int.Stable.V1.t [@@deriving bin_io, version {rpc}]
+    end
+  end
+end
+
 (* deliberately unversioned *)
 type t = int [@@bin_io_unversioned]

@@ -33,11 +33,17 @@ let make_deriving_validator ~pred err_msg type_decl =
       in
       let make_lident_pattern nm = Ast_pattern.(pexp_ident (lident (string nm))) in
       let version_pattern = make_lident_pattern "version" in
+      let version_with_arg_pattern = Ast_pattern.(pexp_apply (make_lident_pattern "version") __) in
       let bin_io_pattern = make_lident_pattern "bin_io" in
-      let find_pattern pat = List.exists derivers ~f:(fun deriver ->
-          Option.is_some @@ parse_opt pat Location.none deriver (Some ())) in
+      let make_find_pattern handler pat = List.exists derivers ~f:(fun deriver ->
+          Option.is_some @@ parse_opt pat Location.none deriver handler)
+      in
+      let find_pattern = make_find_pattern (Some ()) in
+      let find_with_arg_pattern = make_find_pattern (fun _ -> Some ()) in
       let has_bin_io = find_pattern bin_io_pattern in
-      let has_version = find_pattern version_pattern in
+      let has_version = find_pattern version_pattern
+                        || find_with_arg_pattern version_with_arg_pattern
+      in
       if pred has_bin_io has_version then [(derivers_loc, err_msg)] else []
     | None -> []
 
