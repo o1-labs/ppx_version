@@ -14,72 +14,32 @@
 
 open Core_kernel
 open Ppxlib
+open Versioned_util
 
 let name = "enforce_version_syntax"
 
 let errors_as_warnings_ref = ref false
 
-let is_ident ident item =
-  let version_id id =
-    match id.txt with Lident s -> String.equal s ident | _ -> false
-  in
-  match item with
-  | Pexp_ident id ->
-      version_id id
-  | Pexp_apply ({pexp_desc= Pexp_ident id; _}, _) ->
-      version_id id
-  | _ ->
-      false
-
-let payload_has_item is_item_ident payload =
-  match payload with
-  | PStr structure ->
-      List.exists structure ~f:(fun str ->
-          match str.pstr_desc with
-          | Pstr_eval (expr, _) -> (
-            (* the "ident" can appear as a singleton ident, or in a tuple *)
-            match expr.pexp_desc with
-            | Pexp_ident _ ->
-                is_item_ident expr.pexp_desc
-            | Pexp_apply ({pexp_desc; _}, _) ->
-                is_item_ident pexp_desc
-            | Pexp_tuple items ->
-                List.exists items ~f:(fun item -> is_item_ident item.pexp_desc)
-            | _ ->
-                false )
-          | _ ->
-              false )
-  | _ ->
-      false
-
-let is_version_ident = is_ident "version"
-
-let payload_has_version = payload_has_item is_version_ident
-
-let is_bin_io_ident = is_ident "bin_io"
-
-let payload_has_bin_io = payload_has_item is_bin_io_ident
-
-let attribute_has_deriving_version ((name, payload) : attribute) =
-  String.equal name.txt "deriving" && payload_has_version payload
-
-let attributes_have_deriving_version (attrs : attribute list) =
-  List.exists attrs ~f:attribute_has_deriving_version
-
-let type_has_deriving_version type_decl =
-  attributes_have_deriving_version type_decl.ptype_attributes
-
-let is_deriving name = String.equal name "deriving"
-
 let make_deriving_validator ~pred err_msg type_decl =
-  let get_deriving_error (name, payload) =
-    if is_deriving name.txt then
-      let has_bin_io = payload_has_bin_io payload in
-      let has_version = payload_has_version payload in
-      if pred has_bin_io has_version then Some (name.loc, err_msg) else None
-    else None
+  let derivers =
+    Ast_pattern.(attribute (string "deriving") (single_expr_payload __))
   in
-  List.filter_map type_decl.ptype_attributes ~f:get_deriving_error
+  match List.find_map type_decl.ptype_attributes
+            ~f:(fun attr -> parse_opt derivers Location.none attr (fun l -> Some l)) with
+    | Some derivers ->
+      let derivers_loc = derivers.pexp_loc in
+      let derivers =
+        match derivers.pexp_desc with Pexp_tuple derivers -> derivers | _ -> [derivers]
+      in
+      let make_lident_pattern nm = Ast_pattern.(pexp_ident (lident (string nm))) in
+      let version_pattern = make_lident_pattern "version" in
+      let bin_io_pattern = make_lident_pattern "bin_io" in
+      let find_pattern pat = List.exists derivers ~f:(fun deriver ->
+          Option.is_some @@ parse_opt pat Location.none deriver (Some ())) in
+      let has_bin_io = find_pattern bin_io_pattern in
+      let has_version = find_pattern version_pattern in
+      if pred has_bin_io has_version then [(derivers_loc, err_msg)] else []
+    | None -> []
 
 let validate_neither_bin_io_nor_version =
   make_deriving_validator

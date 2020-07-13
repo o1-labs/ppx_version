@@ -68,45 +68,34 @@ let module_path_list path = List.drop (String.split path ~on:'.') 2
 (* print versioned types *)
 module Printing = struct
   let contains_deriving_bin_io (attrs : attributes) =
-    match
-      List.find attrs ~f:(fun ({txt; _}, _) -> String.equal txt "deriving")
-    with
-    | Some (_deriving, payload) -> (
-      match payload with
-      (* always have a tuple here; any deriving items are in addition to `version` *)
-      | PStr [{pstr_desc= Pstr_eval ({pexp_desc= Pexp_tuple items; _}, _); _}]
-        ->
-          List.exists items ~f:(fun item ->
-              match item with
-              | {pexp_desc= Pexp_ident {txt= Lident "bin_io"; _}; _} ->
-                  true
-              | _ ->
-                  false )
-      | _ ->
-          false )
-    | None ->
-        (* unreachable *)
-        false
+    let derivers =
+      Ast_pattern.(attribute (string "deriving") (single_expr_payload __))
+    in
+    match List.find_map attrs
+            ~f:(fun attr -> parse_opt derivers Location.none attr (fun l -> Some l)) with
+    | Some derivers ->
+      let derivers =
+        match derivers.pexp_desc with Pexp_tuple derivers -> derivers | _ -> [derivers]
+      in
+      let bin_io_pattern = Ast_pattern.(pexp_ident (lident (string "bin_io"))) in
+      List.exists derivers ~f:(fun deriver ->
+          Option.is_some @@ parse_opt bin_io_pattern Location.none deriver (Some ()))
+    | None -> false
 
   (* singleton attribute *)
   let just_bin_io =
     let loc = Location.none in
-    [ ( {txt= "deriving"; loc}
-      , PStr
-          [ { pstr_desc=
-                Pstr_eval
-                  ( { pexp_desc= Pexp_ident {txt= Lident "bin_io"; loc}
-                    ; pexp_loc= loc
-                    ; pexp_attributes= [] }
-                  , [] )
-            ; pstr_loc= loc } ] ) ]
+    let module E = Ppxlib.Ast_builder.Make (struct
+      let loc = loc
+    end) in
+    let open E in
+    ({txt="deriving";loc},PStr [%str bin_io])
 
   (* filter attributes from types, except for bin_io, don't care about changes to others *)
   let filter_type_decls_attrs type_decl =
     (* retain `deriving bin_io` *)
-    let attrs = type_decl.ptype_attributes in
     let ptype_attributes =
-      if contains_deriving_bin_io attrs then just_bin_io else []
+      if contains_deriving_bin_io type_decl.ptype_attributes then [just_bin_io] else []
     in
     {type_decl with ptype_attributes}
 
