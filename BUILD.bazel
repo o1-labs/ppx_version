@@ -1,0 +1,186 @@
+load("@obazl_rules_ocaml//ocaml:build.bzl",
+     "ppx_binary",
+     "ppx_archive",
+     "ppx_module",
+     "ppx_ns_module",
+     "ppx_test",
+)
+
+SRCS = [
+    "src/bin_io_unversioned.ml",
+    "src/lint_version_syntax.ml",
+    # "src/print_binable_functors.ml",
+    # "src/print_versioned_types.ml",
+    "src/versioned_util.ml",
+    "src/versioned_module.ml",
+    "src/versioned_type.ml",
+]
+
+SUBMODULE_OPTS = [
+    "-linkall", "-linkpkg",
+    "-c",
+    "-predicates", "ppx_deriving",
+    "-no-alias-deps", "-opaque",
+    # "-verbose"
+]
+
+## Compile the ns module.  No preprocessing.
+
+NS = "ppx_version__"
+
+ppx_ns_module(
+    name        = "ns_module",
+    module_name = "ppx_version__",
+    ns          = NS,
+    submodules  = SRCS
+)
+
+## Preprocess, rename, and compile each submodule, in dependency order.
+## to get a deps.depends file, build target :deps
+
+COMMON_DEPS = [# "@opam//pkg:core_kernel", "@opam//pkg:ppxlib", ":ns_module"]
+        "@opam//pkg:compiler-libs.common",
+        "@opam//pkg:ppxlib",
+        "@opam//pkg:ppx_deriving.api",
+        "@opam//pkg:ppx_bin_prot",
+        "@opam//pkg:core_kernel",
+     ":ns_module"]
+
+ppx_module( name = "bin_io_unversioned_cm", impl = "src/bin_io_unversioned.ml",
+                  ns   = NS,
+                  ppx  = "@opam//ppxlib:metaquot",
+                  opts = SUBMODULE_OPTS,
+                  deps = COMMON_DEPS + [":versioned_util_cm"])
+ppx_module( name = "lint_version_syntax_cm", impl = "src/lint_version_syntax.ml",
+                  ns   = NS,
+                  ppx  = "@opam//ppxlib:metaquot",
+                  opts = SUBMODULE_OPTS,
+                  deps = COMMON_DEPS)
+ppx_module( name = "versioned_module_cm", impl = "src/versioned_module.ml",
+                  ns   = NS,
+                  ppx  = "@opam//ppxlib:metaquot",
+                  opts = SUBMODULE_OPTS,
+                  deps = COMMON_DEPS + [":versioned_util_cm"])
+ppx_module( name = "versioned_type_cm", impl = "src/versioned_type.ml",
+                  ns   = NS,
+                  ppx  = "@opam//ppxlib:metaquot",
+                  opts = SUBMODULE_OPTS,
+                  deps = COMMON_DEPS + [":versioned_util_cm"])
+ppx_module( name = "versioned_util_cm", impl = "src/versioned_util.ml",
+                  ns   = NS,
+                  ppx  = "@opam//ppxlib:metaquot",
+                  opts = SUBMODULE_OPTS,
+                  deps = COMMON_DEPS)
+
+## Now link ns module and submodules into archive.
+ppx_archive(
+    name = "ppx_version",
+    msg  = "Compiling ppx_version...",
+    deps = [
+        "@opam//pkg:compiler-libs.common",
+        "@opam//pkg:ppxlib",
+        "@opam//pkg:ppx_deriving.api",
+        "@opam//pkg:ppx_bin_prot",
+        "@opam//pkg:core_kernel",
+        ":ns_module",
+        ":versioned_util_cm",
+        ":lint_version_syntax_cm",
+        ":bin_io_unversioned_cm",
+        ":versioned_type_cm",
+        ":versioned_module_cm",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+# standalone executable
+ppx_binary(
+    name = "ppx_version.exe",
+    opts = ["-linkpkg",
+            "-linkall",
+            # "-verbose",
+    ],
+    deps = [":ppx_version",
+            "@opam//pkg:compiler-libs.common",
+            "@opam//pkg:ppxlib",
+            "@opam//pkg:ppx_bin_prot",
+            "@opam//pkg:core_kernel",
+            "@opam//ppxlib:driver_standalone_runner"]
+)
+
+################################################################
+####  EXECUTABLES  ####
+
+## These don't build under dune, so we ignore for now.
+
+################################################################
+#### TESTS ####
+
+ppx_binary(
+    name = "test_ppx",
+    srcs = ["@opam//ppxlib:driver_standalone_shim"],
+    opts = ["-strict-sequence",
+            "-strict-formats",
+            "-short-paths",
+            "-keep-locs",
+            "-g",
+            "-predicates", "ppx_deriving",
+            "-predicates", "ppx_driver",
+            "-linkpkg",
+            # "-verbose",
+    ],
+    deps = [
+        "@opam//pkg:core_kernel",
+        "@opam//pkg:ppxlib",
+        "@opam//pkg:ppx_inline_test",
+        "@opam//pkg:ppx_jane",
+        "@opam//pkg:ppx_deriving_yojson",
+        ":ppx_version",
+    ]
+)
+
+# run the tests:  $ bazel test :ppx_version_sh_test
+sh_test(
+    name = "ppx_version_sh_test",
+    srcs = ["test/ppx_version_test.sh"],
+    args = ["$(location :test_ppx)", "foo"],
+    data = [
+        ":test_ppx",
+        # "test/bad_version_syntax_bin_io_in_functor.ml",
+        # "test/bad_version_syntax_extension.ml",
+
+        ##FIXME: succeeds, should fail:
+        "test/bad_version_syntax_missing_versioned.ml",
+        ##FIXME: succeeds, should fail:
+        "test/bad_version_syntax_multiple_errors.ml",
+
+        # "test/bad_version_syntax_version_in_functor.ml",
+
+        ##FIXME: succeeds, should fail:
+        "test/bad_versioned_in_functor.ml",
+        ##FIXME: succeeds, should fail:
+        "test/bad_versioned_in_nested_functor.ml",
+
+        "test/versioned_bad_arrow_type.ml",
+        "test/versioned_bad_contained_types.ml",
+        "test/versioned_bad_module_name.ml",
+        "test/versioned_bad_module_structure.ml",
+        "test/versioned_bad_option.ml",
+        "test/versioned_bad_type_name.ml",
+        "test/versioned_bad_unnumbered.ml",
+        "test/versioned_bad_version_name.ml",
+        "test/versioned_bad_wrapped_module_structure.ml",
+        "test/versioned_module_bad_missing_to_latest.ml",
+        "test/versioned_module_bad_missing_type.ml",
+        "test/versioned_module_bad_stable_name.ml",
+        "test/versioned_module_bad_version_name.ml",
+        "test/versioned_module_bad_version_order.ml",
+
+        "test/good_version_syntax.ml",
+        "test/versioned_good.ml",
+        "test/versioned_module_good.ml",
+        "test/versioned_sig_good.ml",
+
+        ##FIXME: deal with .mli
+        # "test/versioned_sig_good.mli",
+   ],
+)
