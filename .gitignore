@@ -16,5 +16,5 @@ zpipe
 c/dpipe
 *.install
 *~
-.merlin
+**/.merlin
 _opam
