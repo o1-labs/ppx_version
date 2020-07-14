@@ -17,20 +17,19 @@ SRCS = [
 ]
 
 SUBMODULE_OPTS = [
-    "-linkall", "-linkpkg",
+    "-linkall",
+    "-thread",
     "-c",
-    "-predicates", "ppx_deriving",
     "-no-alias-deps", "-opaque",
     # "-verbose"
 ]
 
 ## Compile the ns module.  No preprocessing.
 
-NS = "ppx_version__"
+NS = "ppx_version"
 
 ppx_ns_module(
     name        = "ns_module",
-    module_name = "ppx_version__",
     ns          = NS,
     submodules  = SRCS
 )
@@ -46,42 +45,50 @@ COMMON_DEPS = [# "@opam//pkg:core_kernel", "@opam//pkg:ppxlib", ":ns_module"]
         "@opam//pkg:core_kernel",
      ":ns_module"]
 
+ppx_binary(
+    name="ppxlib.Metaquot",
+    opts = ["-predicates", "ppx_driver", "-linkall"],
+    deps = ["@opam//pkg:base",
+            "@opam//pkg:ppxlib",
+            "@opam//pkg:ppxlib.metaquot",
+            "@opam//pkg:ppxlib.runner",
+    ],
+    visibility = ["//visibility:public"]
+)
+
 ppx_module( name = "bin_io_unversioned_cm", impl = "src/bin_io_unversioned.ml",
-                  ns   = NS,
-                  ppx  = "@opam//ppxlib:metaquot",
-                  opts = SUBMODULE_OPTS,
-                  deps = COMMON_DEPS + [":versioned_util_cm"])
+            ppx_ns_module = ":ns_module",
+            ppx_bin = ":ppxlib.Metaquot",
+            opts = SUBMODULE_OPTS,
+            deps = COMMON_DEPS + [":versioned_util_cm"])
 ppx_module( name = "lint_version_syntax_cm", impl = "src/lint_version_syntax.ml",
-                  ns   = NS,
-                  ppx  = "@opam//ppxlib:metaquot",
-                  opts = SUBMODULE_OPTS,
-                  deps = COMMON_DEPS)
+            ppx_ns_module = ":ns_module",
+            ppx_bin = ":ppxlib.Metaquot",
+            opts = SUBMODULE_OPTS,
+            deps = COMMON_DEPS + [":versioned_util_cm"])
 ppx_module( name = "versioned_module_cm", impl = "src/versioned_module.ml",
-                  ns   = NS,
-                  ppx  = "@opam//ppxlib:metaquot",
-                  opts = SUBMODULE_OPTS,
-                  deps = COMMON_DEPS + [":versioned_util_cm"])
+            ppx_ns_module = ":ns_module",
+            ppx_bin = ":ppxlib.Metaquot",
+            opts = SUBMODULE_OPTS,
+            deps = COMMON_DEPS + [":versioned_util_cm"])
 ppx_module( name = "versioned_type_cm", impl = "src/versioned_type.ml",
-                  ns   = NS,
-                  ppx  = "@opam//ppxlib:metaquot",
-                  opts = SUBMODULE_OPTS,
-                  deps = COMMON_DEPS + [":versioned_util_cm"])
+            ppx_ns_module = ":ns_module",
+            ppx_bin = ":ppxlib.Metaquot",
+            opts = SUBMODULE_OPTS,
+            deps = COMMON_DEPS + [":versioned_util_cm"])
 ppx_module( name = "versioned_util_cm", impl = "src/versioned_util.ml",
-                  ns   = NS,
-                  ppx  = "@opam//ppxlib:metaquot",
-                  opts = SUBMODULE_OPTS,
-                  deps = COMMON_DEPS)
+            ppx_ns_module = ":ns_module",
+            ppx_bin = ":ppxlib.Metaquot",
+            # ppx_bin_opts = ["-cookie", "library-name=\"ppx_version\""],
+            opts = SUBMODULE_OPTS,
+            deps = COMMON_DEPS)
 
 ## Now link ns module and submodules into archive.
 ppx_archive(
     name = "ppx_version",
     msg  = "Compiling ppx_version...",
+    opts = ["-linkall"],
     deps = [
-        "@opam//pkg:compiler-libs.common",
-        "@opam//pkg:ppxlib",
-        "@opam//pkg:ppx_deriving.api",
-        "@opam//pkg:ppx_bin_prot",
-        "@opam//pkg:core_kernel",
         ":ns_module",
         ":versioned_util_cm",
         ":lint_version_syntax_cm",
@@ -95,8 +102,11 @@ ppx_archive(
 # standalone executable
 ppx_binary(
     name = "ppx_version.exe",
+    srcs = ["@opam//ppxlib:driver_standalone_shim"],
     opts = ["-linkpkg",
             "-linkall",
+            "-predicates", "ppx_driver",
+            "-predicates", "ppx_deriver",
             # "-verbose",
     ],
     deps = [":ppx_version",
@@ -104,7 +114,7 @@ ppx_binary(
             "@opam//pkg:ppxlib",
             "@opam//pkg:ppx_bin_prot",
             "@opam//pkg:core_kernel",
-            "@opam//ppxlib:driver_standalone_runner"]
+    ]
 )
 
 ################################################################
