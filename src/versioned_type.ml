@@ -84,9 +84,8 @@ module Printing = struct
 
   (* singleton attribute *)
   let just_bin_io =
-    let loc = Location.none in
     let module E = Ppxlib.Ast_builder.Make (struct
-      let loc = loc
+      let loc = Location.none
     end) in
     let open E in
     ({txt="deriving";loc},PStr [%str bin_io])
