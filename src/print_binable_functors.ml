@@ -10,51 +10,51 @@
 open Core_kernel
 open Ppxlib
 open Ppx_version
+open Versioned_util
 
 let name = "print_binable_functors"
 
 type accumulator = {module_path: string list}
 
 let is_included_binable_functor_app (inc_decl : include_declaration) =
-  match inc_decl with
-  | { pincl_mod=
-        { pmod_desc=
-            Pmod_apply
-              ( { pmod_desc=
-                    Pmod_apply
-                      ( { pmod_desc=
-                            Pmod_ident
-                              {txt= Ldot (Lident "Binable", binable_functor); _}
-                        ; _ }
-                      , _ )
-                ; _ }
-              , _ )
-        ; _ }
-    ; _ } ->
-      List.mem
-        [ "Of_binable"
-        ; "Of_binable1"
-        ; "Of_binable2"
-        ; "Of_binable3"
-        ; "Of_sexpable"
-        ; "Of_stringable" ]
-        binable_functor ~equal:String.equal
-  | { pincl_mod=
-        { pmod_desc=
-            Pmod_apply
-              ( { pmod_desc=
-                    Pmod_ident
-                      { txt=
-                          Ldot
-                            (Ldot (Lident "Bin_prot", "Utils"), "Make_binable")
-                      ; _ }
-                ; _ }
-              , _ )
-        ; _ }
-    ; _ } ->
-      true
-  | _ ->
-      false
+  let of_binable_pattern =
+    Ast_pattern.(
+      pmod_apply
+        (pmod_apply (pmod_ident (ldot (lident (string "Binable")) __)) __)
+        __)
+  in
+  let of_binable =
+    match
+      parse_opt of_binable_pattern Location.none inc_decl.pincl_mod
+        (fun ftor _ _ -> Some ftor)
+    with
+    | Some ftor ->
+        List.mem
+          [ "Of_binable"
+          ; "Of_binable1"
+          ; "Of_binable2"
+          ; "Of_binable3"
+          ; "Of_sexpable"
+          ; "Of_stringable" ]
+          ftor ~equal:String.equal
+    | _ ->
+        false
+  in
+  let make_binable_pattern =
+    Ast_pattern.(
+      pmod_apply
+        (pmod_ident
+           (ldot
+              (ldot (lident (string "Bin_prot")) (string "Utils"))
+              (string "Make_binable")))
+        __)
+  in
+  let make_binable =
+    Option.is_some
+      (parse_opt make_binable_pattern Location.none inc_decl.pincl_mod
+         (fun _ -> Some ()))
+  in
+  of_binable || make_binable
 
 let print_included_binable_functor_app ~path inc =
   let path_len = List.length path in
@@ -94,16 +94,7 @@ let preprocess_impl str =
   ignore (traverse_ast#structure str {module_path= []}) ;
   str
 
-let register_dummy_type_ext_derivers () =
-  let register_event_arg = Ppxlib.Deriving.Args.(arg "msg" __) in
-  Ppx_version.Dummy_derivers.add_type_ext1 "register_event" register_event_arg
-
-let register_dummy_type_decl_derivers () =
-  let derivers = ["dhall_type";"hlist"] in
-  List.iter derivers ~f:Ppx_version.Dummy_derivers.add_type_decl
-
 let () =
-  register_dummy_type_decl_derivers () ;
-  register_dummy_type_ext_derivers () ;
+  Ppx_version.Dummy_derivers.register_dummies () ;
   Ppxlib.Driver.register_transformation name ~preprocess_impl ;
   Ppxlib.Driver.standalone ()
