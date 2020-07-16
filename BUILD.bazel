@@ -132,14 +132,14 @@ ppx_archive(
     opts = ["-linkall"],
     visibility = ["//visibility:public"],
     deps = [
+        ":ppx_version_ns_module",
+        ":versioned_util_cm",
         ":bin_io_unversioned_cm",
         ":dummy_derivers_cm",
         ":lint_version_syntax_cm",
-        ":ppx_version_ns_module",
         ":serialization_cm",
         ":versioned_module_cm",
         ":versioned_type_cm",
-        ":versioned_util_cm",
     ],
 )
 
@@ -151,14 +151,14 @@ ppx_archive(
     opts = ["-linkall"],
     visibility = ["//visibility:public"],
     deps = [
+        ":ppx_version_ns_module",
+        ":versioned_util_cm",
         ":bin_io_unversioned_cm",
         ":dummy_derivers_cm",
         ":lint_version_syntax_cm",
-        ":ppx_version_ns_module",
         ":serialization_cm",
         ":versioned_module_cm",
         ":versioned_type_cm",
-        ":versioned_util_cm",
     ],
 )
 
