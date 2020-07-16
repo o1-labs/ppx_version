@@ -29,7 +29,7 @@ SUBMODULE_OPTS = [
 NS = "ppx_version"
 
 ppx_ns_module(
-    name        = "ns_module",
+    name        = "ppx_version_ns_module",
     ns          = NS,
     submodules  = SRCS
 )
@@ -99,12 +99,33 @@ ppx_archive(
     msg  = "Compiling ppx_version...",
     opts = ["-linkall"],
     deps = [
-        ":ns_module",
+        ":ppx_version_ns_module",
         ":versioned_util_cm",
         ":lint_version_syntax_cm",
         ":bin_io_unversioned_cm",
         ":versioned_type_cm",
         ":versioned_module_cm",
+        ":dummy_derivers_cm",
+        ":serialization_cm",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+ppx_archive(
+    name = "cmxs",
+    archive_name = "ppx_version",
+    msg  = "Compiling ppx_version...",
+    opts = ["-linkall"],
+    linkshared = True,
+    deps = [
+        ":ppx_version_ns_module",
+        ":versioned_util_cm",
+        ":lint_version_syntax_cm",
+        ":bin_io_unversioned_cm",
+        ":versioned_type_cm",
+        ":versioned_module_cm",
+        ":dummy_derivers_cm",
+        ":serialization_cm",
     ],
     visibility = ["//visibility:public"],
 )
