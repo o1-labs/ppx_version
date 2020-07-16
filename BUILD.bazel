@@ -37,8 +37,6 @@ ppx_ns_module(
 )
 
 ## Preprocess, rename, and compile each submodule, in dependency order.
-## to get a deps.depends file, build target :deps
-
 COMMON_DEPS = [
     "@opam//pkg:compiler-libs.common",
     "@opam//pkg:ppxlib",
