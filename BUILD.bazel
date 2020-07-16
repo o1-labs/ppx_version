@@ -8,9 +8,9 @@ load("@obazl_rules_ocaml//ocaml:build.bzl",
 
 SRCS = [
     "src/bin_io_unversioned.ml",
+    "src/dummy_derivers.ml",
     "src/lint_version_syntax.ml",
-    # "src/print_binable_functors.ml",
-    # "src/print_versioned_types.ml",
+    "src/serialization.ml",
     "src/versioned_util.ml",
     "src/versioned_module.ml",
     "src/versioned_type.ml",
@@ -57,27 +57,37 @@ ppx_binary(
 )
 
 ppx_module( name = "bin_io_unversioned_cm", impl = "src/bin_io_unversioned.ml",
-            ppx_ns_module = ":ns_module",
+            ppx_ns_module = ":ppx_version_ns_module",
             ppx_bin = ":ppxlib.Metaquot",
             opts = SUBMODULE_OPTS,
             deps = COMMON_DEPS + [":versioned_util_cm"])
+ppx_module( name = "dummy_derivers_cm", impl = "src/dummy_derivers.ml",
+            ppx_ns_module = ":ppx_version_ns_module",
+            ppx_bin = ":ppxlib.Metaquot",
+            opts = SUBMODULE_OPTS,
+            deps = COMMON_DEPS)
 ppx_module( name = "lint_version_syntax_cm", impl = "src/lint_version_syntax.ml",
-            ppx_ns_module = ":ns_module",
+            ppx_ns_module = ":ppx_version_ns_module",
             ppx_bin = ":ppxlib.Metaquot",
             opts = SUBMODULE_OPTS,
             deps = COMMON_DEPS + [":versioned_util_cm"])
+ppx_module( name = "serialization_cm", impl = "src/serialization.ml",
+            ppx_ns_module = ":ppx_version_ns_module",
+            ppx_bin = ":ppxlib.Metaquot",
+            opts = SUBMODULE_OPTS,
+            deps = COMMON_DEPS)
 ppx_module( name = "versioned_module_cm", impl = "src/versioned_module.ml",
-            ppx_ns_module = ":ns_module",
+            ppx_ns_module = ":ppx_version_ns_module",
             ppx_bin = ":ppxlib.Metaquot",
             opts = SUBMODULE_OPTS,
             deps = COMMON_DEPS + [":versioned_util_cm"])
 ppx_module( name = "versioned_type_cm", impl = "src/versioned_type.ml",
-            ppx_ns_module = ":ns_module",
+            ppx_ns_module = ":ppx_version_ns_module",
             ppx_bin = ":ppxlib.Metaquot",
             opts = SUBMODULE_OPTS,
             deps = COMMON_DEPS + [":versioned_util_cm"])
 ppx_module( name = "versioned_util_cm", impl = "src/versioned_util.ml",
-            ppx_ns_module = ":ns_module",
+            ppx_ns_module = ":ppx_version_ns_module",
             ppx_bin = ":ppxlib.Metaquot",
             # ppx_bin_opts = ["-cookie", "library-name=\"ppx_version\""],
             opts = SUBMODULE_OPTS,
