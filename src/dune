@@ -4,6 +4,7 @@
  (kind ppx_deriver)
  (modules (:standard \ print_versioned_types print_binable_functors))
  (libraries compiler-libs.common ppxlib ppx_bin_prot core_kernel)
+ (ppx_runtime_libraries ppx_version.runtime)
  (preprocess (pps ppxlib.metaquot)))
 
 (executable
