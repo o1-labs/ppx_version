@@ -16,8 +16,6 @@ module Good = struct
     end
   end]
 
-  type t = Stable.Latest.t
-
   (* make sure t is an int *)
   let is_42 t = Int.( = ) t 42
 end
