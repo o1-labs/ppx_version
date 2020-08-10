@@ -22,8 +22,6 @@ module M1 = struct
       let to_latest b = if b then 1 else 0
     end
   end]
-
-  type t = Stable.Latest.t
 end
 
 let () =
@@ -72,8 +70,6 @@ module M2 = struct
       type t = {a: M1.Stable.V1.t}
     end
   end]
-
-  type 'a t = 'a Stable.Latest.t = {a: 'a; b: int}
 end
 
 (* No [to_latest] necessary when older versions have parameters. *)
@@ -96,8 +92,6 @@ module M3 = struct
       let to_latest {a} = {V3.a; b= (if a then 1 else 0)}
     end
   end]
-
-  type t = Stable.Latest.t = {a: bool; b: int}
 end
 
 (* Test that types with arguments are still annotated with the correct
@@ -144,8 +138,6 @@ module M4 = struct
       let to_latest = Fn.id
     end
   end]
-
-  type t = Stable.Latest.t = {a: bool; b: int}
 end
 
 (* Allow binable functor *)
@@ -182,8 +174,6 @@ module M6 = struct
       let to_latest = Fn.id
     end
   end]
-
-  type t = Stable.Latest.t
 end
 
 module M7 = struct
@@ -195,8 +185,6 @@ module M7 = struct
       let to_latest = Fn.id
     end
   end]
-
-  type t = Stable.Latest.t
 end
 
 (* Test that types applied to parameters are properly versioned. *)
@@ -254,8 +242,6 @@ module M8 = struct
           end )
     end
   end]
-
-  type t = Stable.Latest.t
 
   module X = struct
     open Stable.V1
