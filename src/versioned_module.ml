@@ -2,6 +2,8 @@ open Core_kernel
 open Ppxlib
 open Versioned_util
 
+let no_toplevel_latest_type = ref false
+
 (* option to `deriving version' *)
 type version_option = No_version_option | Asserted | Binable
 
@@ -475,7 +477,7 @@ let convert_modbody ~loc ~version_option body =
         (body, [])
   in
   let _, rev_str, convs, type_stri, _no_toplevel_type =
-    List.fold ~init:(None, [], [], None, false) body
+    List.fold ~init:(None, [], [], None, !no_toplevel_latest_type) body
       ~f:(fun (version, rev_str, convs, type_stri, no_toplevel_type) stri ->
         match stri.pstr_desc with
         | Pstr_attribute ({txt= "no_toplevel_latest_type"; _}, _) ->
@@ -662,7 +664,7 @@ let convert_module_decls ~loc:_ signature =
     ; convertible= false
     ; sigitems= []
     ; extra_sigitems= []
-    ; no_toplevel_latest= false }
+    ; no_toplevel_latest= !no_toplevel_latest_type }
   in
   let f
       {latest; last; convertible; sigitems; extra_sigitems; no_toplevel_latest}
@@ -805,4 +807,12 @@ let () =
   let rules =
     [module_rule; module_rule_asserted; module_rule_binable; module_decl_rule]
   in
-  Driver.register_transformation "ppx_version/versioned_module" ~rules
+  Driver.register_transformation "ppx_version/versioned_module" ~rules ;
+  Ppxlib.Driver.add_arg "--no-toplevel-latest-type"
+    (Base.Arg.Unit (fun () -> no_toplevel_latest_type := true))
+    ~doc:"Disable the toplevel type t declaration for versioned type modules" ;
+  Ppxlib.Driver.add_arg "--toplevel-latest-type"
+    (Base.Arg.Bool (fun b -> no_toplevel_latest_type := not b))
+    ~doc:
+      "Enable or disable the toplevel type t declaration for versioned type \
+       modules"
