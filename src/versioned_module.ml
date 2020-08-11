@@ -809,10 +809,10 @@ let () =
   in
   Driver.register_transformation "ppx_version/versioned_module" ~rules ;
   Ppxlib.Driver.add_arg "--no-toplevel-latest-type"
-    (Base.Arg.Unit (fun () -> no_toplevel_latest_type := true))
+    (Caml.Arg.Unit (fun () -> no_toplevel_latest_type := true))
     ~doc:"Disable the toplevel type t declaration for versioned type modules" ;
   Ppxlib.Driver.add_arg "--toplevel-latest-type"
-    (Base.Arg.Bool (fun b -> no_toplevel_latest_type := not b))
+    (Caml.Arg.Bool (fun b -> no_toplevel_latest_type := not b))
     ~doc:
       "Enable or disable the toplevel type t declaration for versioned type \
        modules"
