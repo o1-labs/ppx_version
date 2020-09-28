@@ -144,6 +144,7 @@ ppx_executable(
     #     # "@opam//pkg:ppxlib.runner",
     ],
     x_deps = [
+       # "@opam//pkg:bin_prot",
         "@opam//pkg:ppx_deriving_yojson.runtime"
     ],
     visibility = ["//visibility:public"],
@@ -177,14 +178,14 @@ ppx_test(
 )
 
 ################################################################
-ppx_transform(
-    name          = "bad_version_syntax_bin_io_in_functor_x",
-    src           = "bad_version_syntax_bin_io_in_functor.ml",
-    ppx           = ":ppx_exe",
-    # args = ["-print-passes"],
-    output_format = PPX_OUTPUT_FORMAT,
-    deps          = ["@opam//pkg:core_kernel"],
-)
+# ppx_transform(
+#     name          = "bad_version_syntax_bin_io_in_functor_x",
+#     src           = "bad_version_syntax_bin_io_in_functor.ml",
+#     ppx           = ":ppx_exe",
+#     # args = ["-print-passes"],
+#     output_format = PPX_OUTPUT_FORMAT,
+#     deps          = ["@opam//pkg:core_kernel"],
+# )
 
 ppx_diff_test(
     name          = "bad_version_syntax_bin_io_in_functor",
@@ -194,23 +195,6 @@ ppx_diff_test(
     verbose       = True,
     deps          = ["@opam//pkg:core_kernel"],
     timeout       = "short",
-)
-
-ppx_fail_test(
-    name          = "bad_version_syntax_bin_io_in_functor_fail",
-    src           = "bad_version_syntax_bin_io_in_functor.ml",
-    ppx  = ":ppx_exe",
-    expected = "\n".join([
-    ]),
-    # args = [
-    #     # do not sort (buildifier)
-    #     "-cookie",
-    #     "library-name=\"ppx_version_test\"",
-    #     "-corrected-suffix",
-    #     ".ppx-corrected",
-    # ],
-    deps = ["@opam//pkg:core_kernel"],
-    timeout = "short",
 )
 
 ocaml_module(
@@ -505,18 +489,11 @@ ppx_fail_test(
 ppx_fail_test(
     name          = "versioned_bad_module_structure",
     src           = "versioned_bad_module_structure.ml",
-    ppx  = ":ppx_exe",
+    ppx           = ":ppx_exe",
     expected = "\n".join([
 "File \"test/versioned_bad_module_structure.ml\", line 6, characters 8-35:",
 "Error: Versioned type, not a label or variant, must have manifest (right-hand side)"
     ]),
-    args = [
-        # do not sort (buildifier)
-        "-cookie",
-        "library-name=\"ppx_version_test\"",
-        "-corrected-suffix",
-        ".ppx-corrected",
-    ],
     deps = ["@opam//pkg:core_kernel"],
     timeout = "short",
 )
@@ -638,11 +615,11 @@ ppx_diff_test(
     timeout       = "short",
 )
 
-ppx_transform(
-    name          = "versioned_bad_contained_types_x",
-    src           = "versioned_bad_contained_types.ml",
+ocaml_module(
+    name          = "versioned_bad_contained_types_compile",
+    impl          = "versioned_bad_contained_types.ml",
     ppx           = ":ppx_exe",
-    output_format = PPX_OUTPUT_FORMAT,
+    # output_format = PPX_OUTPUT_FORMAT,
     deps          = ["@opam//pkg:core_kernel"],
 )
 

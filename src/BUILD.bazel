@@ -82,7 +82,7 @@ COMMON_DEPS = [
     "@opam//pkg:core_kernel",
     "@opam//pkg:compiler-libs.common",
     "@opam//pkg:ppxlib",
-    "@opam//pkg:ppx_bin_prot"
+    "@opam//pkg:ppx_bin_prot" ## runtime dep: bin_prot
 ]
 
 ocaml_archive(
