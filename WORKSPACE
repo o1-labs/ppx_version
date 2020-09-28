@@ -1,4 +1,6 @@
+# load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")  # buildifier: disable=load
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+# load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")  # buildifier: disable=load
 
 git_repository(
     name = "obazl_rules_ocaml",
@@ -15,4 +17,3 @@ load("@obazl_rules_ocaml//ocaml:deps.bzl",
 ocaml_configure_tooling()
 
 ocaml_register_toolchains(installation="host")
-

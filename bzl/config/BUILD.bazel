@@ -1,0 +1,7 @@
+config_setting( name = "enable_verbose",
+                flag_values = { "//:verbose": "True" })
+config_setting( name = "disable_verbose",
+                flag_values = { "//:verbose": "False" })
+
+config_setting( name = "always_link",
+                flag_values = { "@//:always_link": "True" })
