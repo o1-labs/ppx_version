@@ -118,11 +118,7 @@ filegroup(
 
 ppx_executable(
     name = "ppx_exe",
-    srcs = [
-        # do not sort (buildifier)
-        # this source is a cmx file:
-        "@obazl//ppxlib:driver_standalone_runner",
-    ],
+    srcs = ["@obazl//ppxlib:driver_standalone_runner"],
     opts = select({
         "//bzl/config:enable_verbose": ["-verbose"],
         "//conditions:default": ["-thread"],
@@ -130,7 +126,6 @@ ppx_executable(
         # "-verbose",
         "-linkall",
         "-predicates", "ppx_driver,ppx_deriver",
-        # "-predicates", "native",
     ],
     deps = [
         "@opam//pkg:core_kernel",
@@ -143,10 +138,7 @@ ppx_executable(
     #     ## guarantee that the runner comes last:
     #     # "@opam//pkg:ppxlib.runner",
     ],
-    x_deps = [
-       # "@opam//pkg:bin_prot",
-        "@opam//pkg:ppx_deriving_yojson.runtime"
-    ],
+    x_deps = ["@opam//pkg:ppx_deriving_yojson.runtime"],
     visibility = ["//visibility:public"],
 )
 
@@ -166,7 +158,9 @@ ocaml_module(
     # ppx  = {":ppx_exe" : """
     # -cookie 'library-name="ppx_version_test"' -corrected-suffix .ppx-corrected
     # """,
-    deps = ["@opam//pkg:core_kernel"]
+    deps = ["@opam//pkg:core_kernel",            ## testing @opam/@_opam
+            "@zopam//lib/ppxlib:ppxlib",
+            ]
 )
 
 ppx_test(
@@ -178,15 +172,6 @@ ppx_test(
 )
 
 ################################################################
-# ppx_transform(
-#     name          = "bad_version_syntax_bin_io_in_functor_x",
-#     src           = "bad_version_syntax_bin_io_in_functor.ml",
-#     ppx           = ":ppx_exe",
-#     # args = ["-print-passes"],
-#     output_format = PPX_OUTPUT_FORMAT,
-#     deps          = ["@opam//pkg:core_kernel"],
-# )
-
 ppx_diff_test(
     name          = "bad_version_syntax_bin_io_in_functor",
     src           = "bad_version_syntax_bin_io_in_functor.ml",
@@ -217,13 +202,13 @@ ocaml_module(
 )
 
 ################################################################
-ppx_transform(
-    name          = "bad_version_syntax_extension_x",
-    src           = "bad_version_syntax_extension.ml",
-    ppx           = ":ppx_exe",
-    output_format = PPX_OUTPUT_FORMAT,
-    deps          = ["@opam//pkg:core_kernel"],
-)
+# ppx_transform(
+#     name          = "bad_version_syntax_extension_x",
+#     src           = "bad_version_syntax_extension.ml",
+#     ppx           = ":ppx_exe",
+#     output_format = PPX_OUTPUT_FORMAT,
+#     deps          = ["@opam//pkg:core_kernel"],
+# )
 
 ppx_diff_test(
     name          = "bad_version_syntax_extension",
