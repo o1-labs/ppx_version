@@ -309,7 +309,7 @@ let lint_ast =
                     , {pmod_desc= Pmod_ident {txt= arg; _}; _} )
               ; pmod_loc
               ; _ }
-            , {pmod_desc= Pmod_ident {txt= Lident _; _}; _} )
+            , _ )
           when List.mem
                  ["Of_binable"; "Of_binable1"; "Of_binable2"; "Of_binable3"]
                  of_binable ~equal:String.equal ->

@@ -2,6 +2,8 @@ open Core_kernel
 open Ppxlib
 open Versioned_util
 
+let no_toplevel_latest_type = ref false
+
 (* option to `deriving version' *)
 type version_option = No_version_option | Asserted | Binable
 
@@ -63,7 +65,8 @@ let rec add_deriving ~loc ~version_option attributes =
           in
           let has_version =
             List.exists args ~f:(fun arg ->
-                Option.is_some @@ parse_opt special_version loc arg (fun _ -> Some ()))
+                Option.is_some
+                @@ parse_opt special_version loc arg (fun _ -> Some ()) )
           in
           let needs_bin_io =
             match version_option with
@@ -85,6 +88,99 @@ let rec add_deriving ~loc ~version_option attributes =
           in
           modify_attr_payload attr (payload (extra_payload_args @ args))
           :: attributes )
+
+let erase_stable_versions =
+  object
+    inherit Ast_traverse.map as super
+
+    method! core_type typ =
+      match typ.ptyp_desc with
+      | Ptyp_constr
+          ({txt= Ldot (Ldot (Ldot (lid, "Stable"), vn), "t"); loc}, typs)
+        when try
+               validate_module_version vn loc ;
+               true
+             with _ -> false ->
+          (* Erase [.Stable.Vn.t] to [.t] *)
+          let typ =
+            { typ with
+              ptyp_desc= Ptyp_constr ({txt= Ldot (lid, "t"); loc}, typs) }
+          in
+          super#core_type typ
+      | _ ->
+          super#core_type typ
+
+    method! type_declaration typ =
+      let typ = super#type_declaration typ in
+      let ptype_attributes =
+        List.filter_map typ.ptype_attributes
+          ~f:(fun ((attr_name, payload) as attr) ->
+            if String.equal attr_name.txt "deriving" then
+              let remove_derivers = [|"bin_io"; "version"|] in
+              match payload with
+              | PStr
+                  [ ( { pstr_desc=
+                          Pstr_eval
+                            (({pexp_desc= Pexp_tuple exprs; _} as expr), _)
+                      ; _ } as stri ) ] -> (
+                  let exprs =
+                    List.filter exprs ~f:(function
+                      | {pexp_desc= Pexp_ident {txt= Lident name; _}; _}
+                      | { pexp_desc=
+                            Pexp_apply
+                              ( {pexp_desc= Pexp_ident {txt= Lident name; _}; _}
+                              , _ )
+                        ; _ }
+                        when Array.mem ~equal:String.equal remove_derivers name
+                        ->
+                          false
+                      | _ ->
+                          true )
+                  in
+                  match exprs with
+                  | [] ->
+                      None
+                  | [e] ->
+                      Some
+                        ( attr_name
+                        , PStr [{stri with pstr_desc= Pstr_eval (e, [])}] )
+                  | es ->
+                      Some
+                        ( attr_name
+                        , PStr
+                            [ { stri with
+                                pstr_desc=
+                                  Pstr_eval
+                                    ({expr with pexp_desc= Pexp_tuple es}, [])
+                              } ] ) )
+              | PStr
+                  [ { pstr_desc=
+                        Pstr_eval
+                          ( { pexp_desc=
+                                ( Pexp_ident {txt= Lident name; _}
+                                | Pexp_apply
+                                    ( { pexp_desc=
+                                          Pexp_ident {txt= Lident name; _}
+                                      ; _ }
+                                    , _ ) )
+                            ; _ }
+                          , _ )
+                    ; _ } ]
+                when Array.mem ~equal:String.equal remove_derivers name ->
+                  None
+              | _ ->
+                  Some attr
+            else Some attr )
+      in
+      { typ with
+        ptype_attributes
+      ; ptype_manifest=
+          Some
+            (Ast_helper.Typ.constr ~loc:typ.ptype_loc
+               { Location.txt= Longident.parse "Stable.Latest.t"
+               ; loc= typ.ptype_loc }
+               (List.map ~f:fst typ.ptype_params)) }
+  end
 
 let version_type ~version_option version stri =
   let loc = stri.pstr_loc in
@@ -352,7 +448,8 @@ let convert_module_stri ~version_option last_version stri =
          ~expr:
            (pmod_structure ~loc:str.loc
               (type_str @ str_rest @ with_version_bin_io_shadows)))
-  , should_convert )
+  , should_convert
+  , type_stri )
 
 let convert_modbody ~loc ~version_option body =
   let may_convert_latest = ref None in
@@ -379,20 +476,29 @@ let convert_modbody ~loc ~version_option body =
     | Binable ->
         (body, [])
   in
-  let _, rev_str, convs =
-    List.fold ~init:(None, [], []) body
-      ~f:(fun (version, rev_str, convs) stri ->
-        let version, stri, should_convert =
-          convert_module_stri ~version_option version stri
-        in
-        ( match !may_convert_latest with
-        | None ->
-            may_convert_latest := Some should_convert ;
-            latest_version := Some version
-        | Some _ ->
-            () ) ;
-        let convs = if should_convert then version :: convs else convs in
-        (Some version, stri :: rev_str, convs) )
+  let _, rev_str, convs, type_stri, _no_toplevel_type =
+    List.fold ~init:(None, [], [], None, !no_toplevel_latest_type) body
+      ~f:(fun (version, rev_str, convs, type_stri, no_toplevel_type) stri ->
+        match stri.pstr_desc with
+        | Pstr_attribute ({txt= "no_toplevel_latest_type"; _}, _) ->
+            (version, rev_str, convs, None, true)
+        | _ ->
+            let version, stri, should_convert, current_type_stri =
+              convert_module_stri ~version_option version stri
+            in
+            let type_stri =
+              if no_toplevel_type then None
+              else Some (Option.value ~default:current_type_stri type_stri)
+            in
+            ( match !may_convert_latest with
+            | None ->
+                may_convert_latest := Some should_convert ;
+                latest_version := Some version
+            | Some _ ->
+                () ) ;
+            let convs = if should_convert then version :: convs else convs in
+            (Some version, stri :: rev_str, convs, type_stri, no_toplevel_type)
+    )
   in
   let (module Ast_builder) = Ast_builder.make loc in
   let rev_str =
@@ -455,19 +561,28 @@ let convert_modbody ~loc ~version_option body =
     | _ ->
         rev_str
   in
-  List.rev rev_str @ unconverted
+  (List.rev rev_str @ unconverted, type_stri)
 
 let version_module ~loc ~version_option ~path:_ modname modbody =
   Printexc.record_backtrace true ;
   try
     let modname = map_loc ~f:(check_modname ~loc:modname.loc) modname in
-    let modbody =
-      map_loc ~f:(convert_modbody ~version_option ~loc:modbody.loc) modbody
+    let modbody_txt, type_stri =
+      convert_modbody ~version_option ~loc:modbody.loc modbody.txt
     in
+    let modbody = {Location.txt= modbody_txt; loc= modbody.loc} in
     let open Ast_helper in
-    Str.module_ ~loc
-      (Mb.mk ~loc:modname.loc modname
-         (Mod.structure ~loc:modbody.loc modbody.txt))
+    let type_stri =
+      Option.map ~f:erase_stable_versions#structure_item type_stri
+      |> Option.to_list
+    in
+    Str.include_ ~loc
+      (Incl.mk ~loc
+         (Ast_helper.Mod.structure ~loc
+            ( Str.module_ ~loc
+                (Mb.mk ~loc:modname.loc modname
+                   (Mod.structure ~loc:modbody.loc modbody.txt))
+            :: type_stri )))
   with exn ->
     Format.(fprintf err_formatter "%s@." (Printexc.get_backtrace ())) ;
     raise exn
@@ -480,10 +595,11 @@ let version_module ~loc ~version_option ~path:_ modname modbody =
  *)
 
 (* parameterless_t means the type t in the module type has no parameters *)
-type sig_accum = {sigitems: signature; parameterless_t: bool}
+type sig_accum =
+  {sigitems: signature; parameterless_t: bool; type_decl: signature_item option}
 
-let convert_module_type_signature_item {sigitems; parameterless_t} sigitem :
-    sig_accum =
+let convert_module_type_signature_item {sigitems; parameterless_t; type_decl}
+    sigitem : sig_accum =
   match sigitem.psig_desc with
   | Psig_type
       ( recflag
@@ -496,27 +612,33 @@ let convert_module_type_signature_item {sigitems; parameterless_t} sigitem :
         Psig_type (recflag, [{type_ with ptype_attributes= ptype_attributes'}])
       in
       let parameterless_t = List.is_empty ptype_params in
-      {sigitems= {sigitem with psig_desc} :: sigitems; parameterless_t}
+      let type_decl = Some (erase_stable_versions#signature_item sigitem) in
+      { sigitems= {sigitem with psig_desc} :: sigitems
+      ; parameterless_t
+      ; type_decl }
   | _ ->
-      {sigitems= sigitem :: sigitems; parameterless_t}
+      {sigitems= sigitem :: sigitems; parameterless_t; type_decl}
 
 let convert_module_type_signature signature : sig_accum =
   List.fold signature
-    ~init:{sigitems= []; parameterless_t= false}
+    ~init:{sigitems= []; parameterless_t= false; type_decl= None}
     ~f:convert_module_type_signature_item
 
 type module_type_with_convertible =
-  {module_type: module_type; convertible: bool}
+  { module_type: module_type
+  ; convertible: bool
+  ; extra_items: signature_item list }
 
 (* add deriving items to type t in module type *)
 let convert_module_type mod_ty =
   match mod_ty.pmty_desc with
   | Pmty_signature signature ->
-      let {sigitems; parameterless_t} =
+      let {sigitems; parameterless_t; type_decl} =
         convert_module_type_signature signature
       in
       { module_type= {mod_ty with pmty_desc= Pmty_signature (List.rev sigitems)}
-      ; convertible= parameterless_t }
+      ; convertible= parameterless_t
+      ; extra_items= Option.to_list type_decl }
   | _ ->
       Location.raise_errorf ~loc:mod_ty.pmty_loc
         "Expected versioned module type to be a signature"
@@ -530,12 +652,23 @@ type module_accum =
   { latest: string option
   ; last: int option
   ; convertible: bool
-  ; sigitems: signature }
+  ; sigitems: signature
+  ; extra_sigitems: signature
+  ; no_toplevel_latest: bool }
 
 (* convert modules Vn ... V1 contained in Stable *)
 let convert_module_decls ~loc:_ signature =
-  let init = {latest= None; last= None; convertible= false; sigitems= []} in
-  let f {latest; last; convertible; sigitems} sigitem =
+  let init =
+    { latest= None
+    ; last= None
+    ; convertible= false
+    ; sigitems= []
+    ; extra_sigitems= []
+    ; no_toplevel_latest= !no_toplevel_latest_type }
+  in
+  let f
+      {latest; last; convertible; sigitems; extra_sigitems; no_toplevel_latest}
+      sigitem =
     match sigitem.psig_desc with
     | Psig_module ({pmd_name; pmd_type; _} as pmd) ->
         validate_module_version pmd_name.txt pmd_name.loc ;
@@ -549,7 +682,7 @@ let convert_module_decls ~loc:_ signature =
                 "Versioned modules must be listed in decreasing order" ) ;
         let in_latest = Option.is_none latest in
         let latest = if in_latest then Some pmd_name.txt else latest in
-        let {module_type; convertible= module_convertible} =
+        let {module_type; convertible= module_convertible; extra_items} =
           convert_module_type pmd_type
         in
         let psig_desc' = Psig_module {pmd with pmd_type= module_type} in
@@ -558,10 +691,23 @@ let convert_module_decls ~loc:_ signature =
         let convertible =
           if in_latest then module_convertible else convertible
         in
+        let extra_sigitems =
+          if in_latest && not no_toplevel_latest then extra_items
+          else extra_sigitems
+        in
         { latest
         ; last= Some version
         ; convertible
-        ; sigitems= sigitem' :: sigitems }
+        ; sigitems= sigitem' :: sigitems
+        ; extra_sigitems
+        ; no_toplevel_latest }
+    | Psig_attribute ({txt= "no_toplevel_latest_type"; _}, _) ->
+        { latest
+        ; last= None
+        ; convertible
+        ; sigitems
+        ; extra_sigitems= []
+        ; no_toplevel_latest= true }
     | _ ->
         Location.raise_errorf ~loc:sigitem.psig_loc
           "Expected versioned module declaration"
@@ -573,7 +719,7 @@ let version_module_decl ~loc ~path:_ modname signature =
   try
     let open Ast_helper in
     let modname = map_loc ~f:(check_modname ~loc:modname.loc) modname in
-    let {txt= {latest; sigitems; convertible; _}; _} =
+    let {txt= {latest; sigitems; convertible; extra_sigitems; _}; _} =
       map_loc ~f:(convert_module_decls ~loc:signature.loc) signature
     in
     let mk_module_decl name ty_desc =
@@ -604,7 +750,15 @@ let version_module_decl ~loc ~path:_ modname signature =
           in
           List.rev sigitems @ (latest :: defs)
     in
-    mk_module_decl modname (Pmty_signature signature)
+    let sigi = mk_module_decl modname (Pmty_signature signature) in
+    match extra_sigitems with
+    | [] ->
+        sigi
+    | _ ->
+        let open Ast_helper in
+        Sig.mk ~loc
+          (Psig_include
+             (Incl.mk ~loc (Mty.signature ~loc (sigi :: extra_sigitems))))
   with exn ->
     Format.(fprintf err_formatter "%s@." (Printexc.get_backtrace ())) ;
     raise exn
@@ -653,4 +807,12 @@ let () =
   let rules =
     [module_rule; module_rule_asserted; module_rule_binable; module_decl_rule]
   in
-  Driver.register_transformation "ppx_version/versioned_module" ~rules
+  Driver.register_transformation "ppx_version/versioned_module" ~rules ;
+  Ppxlib.Driver.add_arg "--no-toplevel-latest-type"
+    (Caml.Arg.Unit (fun () -> no_toplevel_latest_type := true))
+    ~doc:"Disable the toplevel type t declaration for versioned type modules" ;
+  Ppxlib.Driver.add_arg "--toplevel-latest-type"
+    (Caml.Arg.Bool (fun b -> no_toplevel_latest_type := not b))
+    ~doc:
+      "Enable or disable the toplevel type t declaration for versioned type \
+       modules"
