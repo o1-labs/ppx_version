@@ -1,0 +1,73 @@
+## OBAZL GENERATED FILE ## To retain edits (prevent overwrite), delete this line.
+
+load(
+    "@obazl_rules_ocaml//ocaml:build.bzl",
+    "ocaml_archive",
+    "ocaml_module",
+    "ocaml_ns_module",
+    "ppx_executable",
+)
+
+COMMON_OPTS = select({
+    "//bzl/config:enable_verbose": ["-verbose"],
+    "//conditions:default": ["-thread"],
+}) + []
+
+LINK_OPTS = select({
+    "//bzl/config:always_link": ["-linkall"],
+    "//conditions:default": [],
+}) + []
+
+IMPL_OPTS = COMMON_OPTS + LINK_OPTS + []
+
+# INTF_OPTS = COMMON_OPTS + LINK_OPTS + []
+
+# ARCHIVE_OPTS = COMMON_OPTS + LINK_OPTS + []
+
+# COMMON_DEPS = []
+
+# PPX_EXEC_OPTS = COMMON_OPTS + LINK_OPTS + []
+
+# PPX_IMPL_OPTS = COMMON_OPTS + LINK_OPTS + []
+
+# PPX_INTF_OPTS = COMMON_OPTS + LINK_OPTS + []
+
+# PPX_NS_OPTS = COMMON_OPTS + LINK_OPTS + []
+
+# PPX_ARCHIVE_OPTS = COMMON_OPTS + LINK_OPTS + []
+
+# PPX_VERSION_RUNTIME_NS = "Ppx_version_runtime"
+
+# ocaml_archive(
+#     name = "ppx_version_runtime",
+#     opts = ARCHIVE_OPTS,
+#     visibility = ["//visibility:public"],
+#     deps = [
+#         # do not sort (buildifier)
+#         ":ppx_version_runtime_ns_module",
+#         ":serialization.cm_",
+#     ],
+# )
+
+# ocaml_ns_module(
+#     name = "ppx_version_runtime_ns_module",
+#     ns = PPX_VERSION_RUNTIME_NS,
+#     submodules = [
+#         # do not sort (buildifier)
+#         "serialization.ml",
+#     ],
+# )
+
+# COMMON_DEPS_PPX_VERSION_RUNTIME = [
+#     # do not sort (buildifier)
+#     "@opam//pkg:core_kernel",
+# ]
+
+ocaml_module(
+    name = "ppx_version.runtime",
+    impl = "serialization.ml",
+    # ns_module = ":ppx_version_runtime_ns_module",
+    opts = IMPL_OPTS,
+    visibility = ["//visibility:public"],
+    deps = ["@opam//pkg:core_kernel"]
+)

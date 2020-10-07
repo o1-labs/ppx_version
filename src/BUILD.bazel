@@ -97,7 +97,6 @@ ocaml_archive(
         ":versioned_module.cm_",
         ":dummy_derivers.cm_",
         ":lint_version_syntax.cm_",
-        ":serialization.cm_",
         ":versioned_type.cm_",
         ":bin_io_unversioned.cm_",
     ],
@@ -113,7 +112,6 @@ ocaml_ns_module(
         "bin_io_unversioned.ml",
         "dummy_derivers.ml",
         "lint_version_syntax.ml",
-        "serialization.ml",
         "versioned_util.ml",
         "versioned_type.ml",
     ],
@@ -162,20 +160,6 @@ ocaml_module(
         # "@opam//pkg:ppx_bin_prot",
         # "@opam//pkg:core_kernel",
         ":versioned_util.cm_",
-    ],
-)
-
-ocaml_module(
-    name = "serialization.cm_",
-    impl = "serialization.ml",
-    opts = PPX_IMPL_OPTS,
-    ns_module = ":ppx_version_ns_module",
-    ppx = ":ppxlib_metaquot",
-    ppx_args = PPX_ARGS,
-    visibility = ["//visibility:public"],
-    deps = COMMON_DEPS + [
-        # do not sort (buildifier)
-        # "@opam//pkg:core_kernel",
     ],
 )
 

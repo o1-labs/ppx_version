@@ -133,12 +133,9 @@ ppx_executable(
         "@opam//pkg:ppx_jane",
         "@opam//pkg:ppx_deriving_yojson",
         "//src:ppx_version"
-    #     ## this won't work - ocamlfind insists on reordering deps,
-    #     ## putting opam deps before local deps, so this does not
-    #     ## guarantee that the runner comes last:
-    #     # "@opam//pkg:ppxlib.runner",
     ],
-    x_deps = ["@opam//pkg:ppx_deriving_yojson.runtime"],
+    x_deps = ["@opam//pkg:ppx_deriving_yojson.runtime",
+              "//src/runtime:ppx_version.runtime"],
     visibility = ["//visibility:public"],
 )
 
@@ -446,18 +443,15 @@ ppx_fail_test(
     expected = "\n".join([
 "Raised at file \"parsing/location.ml\", line 514, characters 16-61",
 "Called from file \"string.ml\", line 78, characters 31-49",
-"Called from file \"src/string0.ml\" (inlined), line 62, characters 16-37",
-"Called from file \"src/versioned_util.ml\", line 37, characters 4-249",
-"Called from file \"src/versioned_module.ml\", line 319, characters 2-43",
-"Called from file \"src/versioned_module.ml\", line 386, characters 10-58",
+"Called from file \"src/string0.ml\", line 62, characters 16-37",
+"Called from file \"src/versioned_module.ml\", line 415, characters 2-43",
+"Called from file \"src/versioned_module.ml\", line 487, characters 14-62",
 "Called from file \"list.ml\", line 117, characters 24-34",
-"Called from file \"src/list0.ml\" (inlined), line 22, characters 40-81",
-"Called from file \"src/versioned_module.ml\", line 383, characters 4-521",
-"Called from file \"src/versioned_util.ml\", line 10, characters 57-62",
-"Called from file \"src/versioned_module.ml\", line 465, characters 6-75",
+"Called from file \"src/list0.ml\", line 22, characters 40-81",
+"Called from file \"src/versioned_module.ml\", line 571, characters 6-66",
 "",
 "File \"test/versioned_bad_module_name.ml\", line 7, characters 13-15:",
-"Error: Versioning module name must be Vn, for some positive number n, got: \"Vx\""
+"Error: Versioning module name must be Vn, for some positive number n, got: \"Vx\"",
     ]),
     args = [
         # do not sort (buildifier)
@@ -528,14 +522,12 @@ ppx_fail_test(
     ppx  = ":ppx_exe",
     expected = "\n".join([
 "Raised at file \"parsing/location.ml\", line 514, characters 16-61",
-"Called from file \"src/versioned_module.ml\", line 117, characters 8-23",
-"Called from file \"src/versioned_module.ml\", line 345, characters 4-50",
-"Called from file \"src/versioned_module.ml\", line 386, characters 10-58",
+"Called from file \"src/versioned_module.ml\", line 213, characters 8-23",
+"Called from file \"src/versioned_module.ml\", line 441, characters 4-50",
+"Called from file \"src/versioned_module.ml\", line 487, characters 14-62",
 "Called from file \"list.ml\", line 117, characters 24-34",
-"Called from file \"src/list0.ml\" (inlined), line 22, characters 40-81",
-"Called from file \"src/versioned_module.ml\", line 383, characters 4-521",
-"Called from file \"src/versioned_util.ml\", line 10, characters 57-62",
-"Called from file \"src/versioned_module.ml\", line 465, characters 6-75",
+"Called from file \"src/list0.ml\", line 22, characters 40-81",
+"Called from file \"src/versioned_module.ml\", line 571, characters 6-66",
 "",
 "File \"test/versioned_bad_type_name.ml\", line 7, characters 8-39:",
 "Error: Expected a single public type t.",
@@ -590,6 +582,14 @@ ppx_fail_test(
 )
 
 ################################################################
+ppx_transform(
+    name          = "versioned_bad_contained_types_x",
+    src           = "versioned_bad_contained_types.ml",
+    ppx           = ":ppx_exe",
+    output_format = PPX_OUTPUT_FORMAT,
+    deps          = ["@opam//pkg:core_kernel"],
+)
+
 ppx_diff_test(
     name          = "versioned_bad_contained_types",
     src           = "versioned_bad_contained_types.ml",
@@ -638,7 +638,7 @@ ppx_fail_test(
     expected = "\n".join([
 "Raised at file \"parsing/location.ml\", line 514, characters 16-61",
 "Called from file \"src/versioned_util.ml\", line 10, characters 57-62",
-"Called from file \"src/versioned_module.ml\", line 463, characters 18-69",
+"Called from file \"src/versioned_module.ml\", line 569, characters 18-69",
 "",
 "File \"test/versioned_module_bad_stable_name.ml\", line 4, characters 22-25:",
 "Error: Expected a module named Stable, but got a module named Bad."
@@ -663,13 +663,11 @@ ppx_fail_test(
     ppx  = ":ppx_exe",
     expected = "\n".join([
 "Raised at file \"parsing/location.ml\", line 514, characters 16-61",
-"Called from file \"src/versioned_module.ml\", line 319, characters 2-43",
-"Called from file \"src/versioned_module.ml\", line 386, characters 10-58",
+"Called from file \"src/versioned_module.ml\", line 415, characters 2-43",
+"Called from file \"src/versioned_module.ml\", line 487, characters 14-62",
 "Called from file \"list.ml\", line 117, characters 24-34",
-"Called from file \"src/list0.ml\" (inlined), line 22, characters 40-81",
-"Called from file \"src/versioned_module.ml\", line 383, characters 4-521",
-"Called from file \"src/versioned_util.ml\", line 10, characters 57-62",
-"Called from file \"src/versioned_module.ml\", line 465, characters 6-75",
+"Called from file \"src/list0.ml\", line 22, characters 40-81",
+"Called from file \"src/versioned_module.ml\", line 571, characters 6-66",
 "",
 "File \"test/versioned_module_bad_version_name.ml\", line 6, characters 11-14:",
 "Error: Versioning module containing versioned type must be named Vn, for some number n"
@@ -691,13 +689,11 @@ ppx_fail_test(
     ppx  = ":ppx_exe",
     expected = "\n".join([
 "Raised at file \"parsing/location.ml\", line 514, characters 16-61",
-"Called from file \"src/versioned_module.ml\", line 332, characters 8-101",
-"Called from file \"src/versioned_module.ml\", line 386, characters 10-58",
+"Called from file \"src/versioned_module.ml\", line 428, characters 8-101",
+"Called from file \"src/versioned_module.ml\", line 487, characters 14-62",
 "Called from file \"list.ml\", line 117, characters 24-34",
-"Called from file \"src/list0.ml\" (inlined), line 22, characters 40-81",
-"Called from file \"src/versioned_module.ml\", line 383, characters 4-521",
-"Called from file \"src/versioned_util.ml\", line 10, characters 57-62",
-"Called from file \"src/versioned_module.ml\", line 465, characters 6-75",
+"Called from file \"src/list0.ml\", line 22, characters 40-81",
+"Called from file \"src/versioned_module.ml\", line 571, characters 6-66",
 "",
 "File \"test/versioned_module_bad_missing_type.ml\", line 6, characters 16-26:",
 "Error: Expected a type declaration in this structure."
@@ -719,14 +715,11 @@ ppx_fail_test(
     ppx  = ":ppx_exe",
     expected = "\n".join([
 "Raised at file \"parsing/location.ml\", line 514, characters 16-61",
-"Called from file \"src/option.ml\" (inlined), line 30, characters 14-17",
-"Called from file \"src/versioned_module.ml\", line 321, characters 2-391",
-"Called from file \"src/versioned_module.ml\", line 386, characters 10-58",
+"Called from file \"src/option.ml\", line 30, characters 14-17",
+"Called from file \"src/versioned_module.ml\", line 487, characters 14-62",
 "Called from file \"list.ml\", line 117, characters 24-34",
-"Called from file \"src/list0.ml\" (inlined), line 22, characters 40-81",
-"Called from file \"src/versioned_module.ml\", line 383, characters 4-521",
-"Called from file \"src/versioned_util.ml\", line 10, characters 57-62",
-"Called from file \"src/versioned_module.ml\", line 465, characters 6-75",
+"Called from file \"src/list0.ml\", line 22, characters 40-81",
+"Called from file \"src/versioned_module.ml\", line 571, characters 6-66",
 "",
 "File \"test/versioned_module_bad_version_order.ml\", line 10, characters 4-50:",
 "Error: Versioned modules must be listed in decreasing order."
