@@ -1,5 +1,5 @@
 load(
-    "@obazl_rules_ocaml//ocaml:build.bzl",
+    "@obazl_rules_ocaml//ocaml:rules.bzl",
     "ocaml_archive",
     "ocaml_executable",
     "ocaml_interface",
@@ -8,7 +8,6 @@ load(
     "ppx_archive",
     "ppx_executable",
     "ppx_module",
-    "ppx_ns_module",
 )
 
 COMMON_OPTS = select({
@@ -17,7 +16,7 @@ COMMON_OPTS = select({
 }) + []
 
 LINK_OPTS = select({
-    "//bzl/config:always_link": ["-linkall"],
+    "//bzl/config:enable_always_link": ["-linkall"],
     "//conditions:default": [],
 }) + []
 
@@ -29,7 +28,6 @@ COMMON_DEPS = []
 PPX_EXEC_OPTS = COMMON_OPTS + LINK_OPTS + ["-predicates", "deriver"]
 PPX_IMPL_OPTS = COMMON_OPTS + LINK_OPTS + ["-predicates", "deriver"]
 PPX_INTF_OPTS = COMMON_OPTS + LINK_OPTS + ["-predicates", "deriver"]
-PPX_NS_OPTS = COMMON_OPTS + LINK_OPTS + []
 PPX_ARCHIVE_OPTS = COMMON_OPTS + LINK_OPTS + []
 PPX_VERSION_NS = "Ppx_version"
 
@@ -70,7 +68,7 @@ ppx_executable(
 
 ocaml_module(
     name = "print_versioned_types.cm_",
-    impl = "print_versioned_types.ml",
+    src = "print_versioned_types.ml",
     opts = IMPL_OPTS,
     ppx = "//src:ppxlib_metaquot",
     ppx_args = [
@@ -112,7 +110,7 @@ ppx_executable(
 
 ocaml_module(
     name = "print_binable_functors.cm_",
-    impl = "print_binable_functors.ml",
+    src  = "print_binable_functors.ml",
     opts = IMPL_OPTS + ["-verbose", "-predicates", "ppx_driver,ppx_deriver"],
     ppx = "//src:ppxlib_metaquot",
     ppx_args = [

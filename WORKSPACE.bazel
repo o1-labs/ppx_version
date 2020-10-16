@@ -5,12 +5,10 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 git_repository(
     name = "obazl_rules_ocaml",
     remote = "https://github.com/obazl/rules_ocaml",
-    branch = "dev",
-    # commit = "a678558a1976179fa343176fa68863bea9f53b10",
-    # shallow_since = "1602028970 -0500",
+    branch = "master",
 )
 
-load("@obazl_rules_ocaml//ocaml:deps.bzl",
+load("@obazl_rules_ocaml//ocaml:bootstrap.bzl",
      "ocaml_configure",
      "ocaml_register_toolchains",
      "opam_configure")
