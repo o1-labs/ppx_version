@@ -1,323 +1,197 @@
+## Dune file: /Users/gar/mina/ppx_version/src/dune
+
 load(
-    "@obazl_rules_ocaml//ocaml:build.bzl",
-    "ocaml_archive",
-    "ocaml_executable",
-    "ocaml_interface",
-    "ocaml_module",
+    "@obazl_rules_ocaml//ocaml:rules.bzl",
     "ocaml_ns_module",
     "ppx_archive",
     "ppx_executable",
     "ppx_module",
-    "ppx_ns_module",
 )
 
-COMMON_OPTS = select({
-    "//bzl/config:enable_verbose": ["-verbose"],
-    "//conditions:default": [],
-}) + []
+## Global Options
+load(
+    "//bzl:config.bzl",
+    "GLOBAL_CLI_OPTS",
+    "NS_MODULE_OPTS",
+    "PPX_ARCHIVE_OPTS",
+    "PPX_EXECUTABLE_OPTS",
+    "PPX_MODULE_OPTS",
+)
 
-LINK_OPTS = select({
-    "//bzl/config:always_link": ["-linkall"],
-    "//conditions:default": [],
-}) + []
+## Repo Options
+load("//bzl/ppx_version:config.bzl", "PPX_VERSION_OPTS")
 
-EXEC_OPTS = COMMON_OPTS + LINK_OPTS + []
-IMPL_OPTS = COMMON_OPTS + LINK_OPTS + []
-INTF_OPTS = COMMON_OPTS + LINK_OPTS + []
-ARCHIVE_OPTS = COMMON_OPTS + LINK_OPTS + []
-COMMON_DEPS = []
-PPX_EXEC_OPTS = COMMON_OPTS + LINK_OPTS + ["-predicates", "deriver"]
-PPX_IMPL_OPTS = COMMON_OPTS + LINK_OPTS + ["-predicates", "deriver"]
-PPX_INTF_OPTS = COMMON_OPTS + LINK_OPTS + ["-predicates", "deriver"]
-PPX_NS_OPTS = COMMON_OPTS + LINK_OPTS + []
-PPX_ARCHIVE_OPTS = COMMON_OPTS + LINK_OPTS + []
-PPX_VERSION_NS = "Ppx_version"
+PKG_OPTS = GLOBAL_CLI_OPTS + PPX_VERSION_OPTS + []
+LIB_1_OPTS = []
+LIB_1_NS_MODULE_OPTS = PKG_OPTS + LIB_1_OPTS + NS_MODULE_OPTS
+LIB_1_PPX_ARCHIVE_OPTS = PKG_OPTS + LIB_1_OPTS + PPX_ARCHIVE_OPTS
+LIB_1_PPX_EXECUTABLE_OPTS = PKG_OPTS + LIB_1_OPTS + PPX_EXECUTABLE_OPTS
+LIB_1_PPX_MODULE_OPTS = PKG_OPTS + LIB_1_OPTS + PPX_MODULE_OPTS
 
-PPX_ARGS = [
+LIB_1_DEPS = [
     # do not sort (buildifier)
-    "-cookie",
-    "library-name=\"ppx_version\"",
-    "-corrected-suffix",
-    ".ppx-corrected",
+    "@opam//pkg:compiler-libs.common",
+    "@opam//pkg:ppxlib",
+    "@opam//pkg:ppx_bin_prot",  # lazy dep: bin_prot
+    "@opam//pkg:core_kernel",
 ]
 
-# (preprocess (pps ppxlib.metaquot)))
+LAZY_DEPS = [
+    # do not sort (buildifier)
+    "@opam//pkg:bin_prot",
+    "@ppx_version//src/runtime:ppx_version_runtime",
+]
+
+################################################################
+## LIB 1
+################################################################
+ppx_archive(
+    name = "ppx_version",
+    opts = LIB_1_PPX_ARCHIVE_OPTS,
+    visibility = ["//visibility:public"],
+    deps = LIB_1_DEPS + [
+        # do not sort (buildifier)
+        ":Ppx_version_ns",
+        ":Bin_io_unversioned",
+        ":Dummy_derivers",
+        ":Lint_version_syntax",
+        ":Versioned_module",
+        ":Versioned_type",
+        ":Versioned_util",
+    ],
+)
+
+ocaml_ns_module(
+    name = "Ppx_version_ns",
+    ns = "ppx_version",
+    opts = LIB_1_NS_MODULE_OPTS,
+    submodules = [
+        # do not sort (buildifier)
+        "bin_io_unversioned.ml",
+        "dummy_derivers.ml",
+        "lint_version_syntax.ml",
+        "versioned_module.ml",
+        "versioned_type.ml",
+        "versioned_util.ml",
+    ],
+)
+
+ppx_module(
+    name = "Bin_io_unversioned",
+    src = "bin_io_unversioned.ml",
+    lazy_deps = LAZY_DEPS,
+    ns_module = ":Ppx_version_ns",
+    opts = LIB_1_PPX_MODULE_OPTS,
+    ppx = ":ppxlib_metaquot",
+    visibility = ["//visibility:public"],
+    deps = LIB_1_DEPS + [
+        # do not sort (buildifier)
+        ":Versioned_util",
+    ],
+)
+
+ppx_module(
+    name = "Dummy_derivers",
+    src = "dummy_derivers.ml",
+    lazy_deps = [
+        # do not sort (buildifier)
+        "@ppx_version//src/runtime:ppx_version_runtime",
+    ],
+    ns_module = ":Ppx_version_ns",
+    opts = LIB_1_PPX_MODULE_OPTS,
+    ppx = ":ppxlib_metaquot",
+    visibility = ["//visibility:public"],
+    deps = LIB_1_DEPS + [
+        # do not sort (buildifier)
+    ],
+)
+
+ppx_module(
+    name = "Lint_version_syntax",
+    src = "lint_version_syntax.ml",
+    lazy_deps = [
+        # do not sort (buildifier)
+        "@ppx_version//src/runtime:ppx_version_runtime",
+    ],
+    ns_module = ":Ppx_version_ns",
+    opts = LIB_1_PPX_MODULE_OPTS,
+    ppx = ":ppxlib_metaquot",
+    visibility = ["//visibility:public"],
+    deps = LIB_1_DEPS + [
+        # do not sort (buildifier)
+        ":Versioned_util",
+    ],
+)
+
+ppx_module(
+    name = "Versioned_module",
+    src = "versioned_module.ml",
+    lazy_deps = [
+        # do not sort (buildifier)
+        "@ppx_version//src/runtime:ppx_version_runtime",
+    ],
+    ns_module = ":Ppx_version_ns",
+    opts = LIB_1_PPX_MODULE_OPTS,
+    ppx = ":ppxlib_metaquot",
+    visibility = ["//visibility:public"],
+    deps = LIB_1_DEPS + [
+        # do not sort (buildifier)
+        ":Versioned_util",
+    ],
+)
+
+ppx_module(
+    name = "Versioned_type",
+    src = "versioned_type.ml",
+    lazy_deps = [
+        # do not sort (buildifier)
+        "@ppx_version//src/runtime:ppx_version_runtime",
+    ],
+    ns_module = ":Ppx_version_ns",
+    opts = LIB_1_PPX_MODULE_OPTS,
+    ppx = ":ppxlib_metaquot",
+    visibility = ["//visibility:public"],
+    deps = LIB_1_DEPS + [
+        # do not sort (buildifier)
+        ":Versioned_util",
+    ],
+)
+
+ppx_module(
+    name = "Versioned_util",
+    src = "versioned_util.ml",
+    lazy_deps = [
+        # do not sort (buildifier)
+        "@ppx_version//src/runtime:ppx_version_runtime",
+    ],
+    ns_module = ":Ppx_version_ns",
+    opts = LIB_1_PPX_MODULE_OPTS,
+    ppx = ":ppxlib_metaquot",
+    visibility = ["//visibility:public"],
+    deps = LIB_1_DEPS + [
+        # do not sort (buildifier)
+    ],
+)
+
+################################################################
 ppx_executable(
     name = "ppxlib_metaquot",
     srcs = [
         # do not sort (buildifier)
         "@obazl//ppxlib:driver_standalone_runner",
-        # "@obazl//ppxlib:driver_standalone_shim",
     ],
     opts = select({
         "//bzl/config:enable_verbose": ["-verbose"],
         "//conditions:default": ["-thread"],
     }) + [
-        # "-verbose",
         "-linkall",
         "-predicates", "ppx_driver,ppx_deriver",
-        # "-predicates", "native",
     ],
     deps = [
         # do not sort (buildifier)
         "@opam//pkg:ppxlib",
         "@opam//pkg:ppxlib.metaquot",
-        # "@opam//pkg:ppxlib.runner"
-    ],
-    #  entailed_deps = [
-    #     # do not sort (buildifier)
-    #     # "@opam//pkg:bisect_ppx.runtime",
-    #     # "@opam//pkg:ppx_deriving.runtime",
-    #     # "@opam//pkg:ppx_bench.runtime-lib",
-    #     # "@opam//pkg:ppx_expect.collector",
-    #     # "@opam//pkg:ppx_module_timer.runtime",
-    # ],
-    visibility = ["//visibility:public"],
-)
-
-################################################################
-# (libraries compiler-libs.common ppxlib ppx_bin_prot core_kernel)
-
-COMMON_DEPS = [
-    "@opam//pkg:core_kernel",
-    "@opam//pkg:compiler-libs.common",
-    "@opam//pkg:ppxlib",
-    "@opam//pkg:ppx_bin_prot" ## runtime dep: bin_prot
-]
-
-ocaml_archive(
-    name = "ppx_version",
-    opts = PPX_ARCHIVE_OPTS,
-    visibility = ["//visibility:public"],
-    deps = COMMON_DEPS + [
-        # do not sort (buildifier)
-        # "@opam//pkg:ppxlib.runner",
-        ":ppx_version_ns_module",
-        ":versioned_util.cm_",
-        ":versioned_module.cm_",
-        ":dummy_derivers.cm_",
-        ":lint_version_syntax.cm_",
-        ":versioned_type.cm_",
-        ":bin_io_unversioned.cm_",
-    ],
-)
-
-ocaml_ns_module(
-    name = "ppx_version_ns_module",
-    ns = PPX_VERSION_NS,
-    opts = PPX_NS_OPTS,
-    submodules = [
-        # do not sort (buildifier)
-        "versioned_module.ml",
-        "bin_io_unversioned.ml",
-        "dummy_derivers.ml",
-        "lint_version_syntax.ml",
-        "versioned_util.ml",
-        "versioned_type.ml",
-    ],
-)
-
-ocaml_module(
-    name = "bin_io_unversioned.cm_",
-    impl = "bin_io_unversioned.ml",
-    opts = PPX_IMPL_OPTS,
-    ns_module = ":ppx_version_ns_module",
-    ppx = ":ppxlib_metaquot",
-    ppx_args = PPX_ARGS,
-    visibility = ["//visibility:public"],
-    deps = COMMON_DEPS + [
-        # do not sort (buildifier)
-        ":versioned_util.cm_",
-    ],
-)
-
-ocaml_module(
-    name = "dummy_derivers.cm_",
-    impl = "dummy_derivers.ml",
-    opts = PPX_IMPL_OPTS,
-    ns_module = ":ppx_version_ns_module",
-    ppx = ":ppxlib_metaquot",
-    ppx_args = PPX_ARGS,
-    visibility = ["//visibility:public"],
-    deps = COMMON_DEPS + [
-        # "@opam//pkg:core_kernel",
-        # "@opam//pkg:ppxlib",
-    ]
-)
-
-ocaml_module(
-    name = "lint_version_syntax.cm_",
-    impl = "lint_version_syntax.ml",
-    opts = PPX_IMPL_OPTS,
-    ppx = ":ppxlib_metaquot",
-    ppx_args = PPX_ARGS,
-    ns_module = ":ppx_version_ns_module",
-    visibility = ["//visibility:public"],
-    deps = COMMON_DEPS + [
-        # do not sort (buildifier)
-        # "@opam//pkg:compiler-libs.common",
-        # "@opam//pkg:ppxlib",
-        # "@opam//pkg:ppx_bin_prot",
-        # "@opam//pkg:core_kernel",
-        ":versioned_util.cm_",
-    ],
-)
-
-ocaml_module(
-    name = "versioned_module.cm_",
-    impl = "versioned_module.ml",
-    opts = PPX_IMPL_OPTS,
-    ns_module = ":ppx_version_ns_module",
-    ppx = ":ppxlib_metaquot",
-    ppx_args = PPX_ARGS,
-    # ppx_output_format = PPX_OUTPUT_FORMAT,
-    # ppx_args = ["-predicate", "deriving"],
-    visibility = ["//visibility:public"],
-    deps = COMMON_DEPS + [
-        # do not sort (buildifier)
-        ":versioned_util.cm_",
-    ],
-)
-
-ocaml_module(
-    name = "versioned_type.cm_",
-    impl = "versioned_type.ml",
-    opts = PPX_IMPL_OPTS,
-    ns_module = ":ppx_version_ns_module",
-    ppx = ":ppxlib_metaquot",
-    ppx_args = PPX_ARGS,
-    visibility = ["//visibility:public"],
-    deps = COMMON_DEPS + [
-        ":versioned_util.cm_",
-    ],
-)
-
-ocaml_module(
-    name = "versioned_util.cm_",
-    impl = "versioned_util.ml",
-    opts = PPX_IMPL_OPTS,
-    ns_module = ":ppx_version_ns_module",
-    ppx = ":ppxlib_metaquot",
-    ppx_args = PPX_ARGS,
-    visibility = ["//visibility:public"],
-    deps = COMMON_DEPS + [
-        # do not sort (buildifier)
-        # "@opam//pkg:compiler-libs.common",
-        # "@opam//pkg:core_kernel",
-        # "@opam//pkg:ppxlib",
-        # "@opam//pkg:ppx_bin_prot",
-    ],
-)
-
-################################################################
-
-ocaml_executable(
-    name = "print_versioned_types",
-    opts = IMPL_OPTS + ["-verbose"],
-    visibility = ["//visibility:public"],
-    deps = [
-        # do not sort (buildifier)
-        # "@//Users/gar/coda/gitfork/src/external/ppx_version/src",
-        # "@opam//pkg:ppx_bin_prot",
-        # # "@opam//pkg:lens",
-        # # "@opam//pkg:lens.ppx_deriving",
-        # "@opam//pkg:ppx_deriving",
-        # "@opam//pkg:ppx_deriving.std",
-        # "@opam//pkg:ppx_sexp_conv",
-        # "@opam//pkg:ppx_compare",
-        # "@opam//pkg:ppx_enumerate",
-        # "@opam//pkg:ppx_fields_conv",
-        # "@opam//pkg:ppx_hash",
-        # "@opam//pkg:ppx_deriving_yojson",
-        ":ppx_version",
-        ":print_versioned_types.cm_"
-    ],
-)
-
-ocaml_module(
-    name = "print_versioned_types.cm_",
-    impl = "print_versioned_types.ml",
-    opts = IMPL_OPTS,
-    ppx = ":ppxlib_metaquot",
-    ppx_args = [
-        # do not sort (buildifier)
-        "-cookie",
-        "library-name=\"print_versioned_types\"",
-        "-corrected-suffix",
-        ".ppx-corrected",
     ],
     visibility = ["//visibility:public"],
-    deps = [
-        # do not sort (buildifier)
-        # "@//Users/gar/coda/gitfork/src/external/ppx_version/src",
-        # "@opam//pkg:ppx_bin_prot",
-        # # "@opam//pkg:lens",
-        # # "@opam//pkg:lens.ppx_deriving",
-        # "@opam//pkg:ppx_deriving",
-        # "@opam//pkg:ppx_deriving.std",
-        # "@opam//pkg:ppx_sexp_conv",
-        # "@opam//pkg:ppx_compare",
-        # "@opam//pkg:ppx_enumerate",
-        # "@opam//pkg:ppx_fields_conv",
-        # "@opam//pkg:ppx_hash",
-        # "@opam//pkg:ppx_deriving_yojson",
-        ":ppx_version"
-    ],
-)
-## executable: print_binable_functors
-
-ppx_executable(
-    name = "print_binable_functors",
-    srcs = ["@obazl//ppxlib:driver_standalone_runner"],
-    opts = IMPL_OPTS + [
-        "-verbose",
-        "-linkall",
-        "-predicates", "ppx_driver,ppx_deriver",
-        # "-predicates", "native",
-    ],
-    visibility = ["//visibility:public"],
-    deps = [
-        # do not sort (buildifier)
-        "@opam//pkg:ppx_bin_prot",
-        "@opam//pkg:lens.ppx_deriving",
-        "@opam//pkg:ppx_deriving",
-        "@opam//pkg:ppx_deriving.std",
-        "@opam//pkg:ppx_sexp_conv",
-        "@opam//pkg:ppx_compare",
-        "@opam//pkg:ppx_enumerate",
-        "@opam//pkg:ppx_fields_conv",
-        "@opam//pkg:ppx_hash",
-        "@opam//pkg:ppx_deriving_yojson",
-        # ":ppx_version",
-        ":print_binable_functors.cm_",
-    ],
 )
 
-ocaml_module(
-    name = "print_binable_functors.cm_",
-    impl = "print_binable_functors.ml",
-    opts = IMPL_OPTS + ["-verbose", "-predicates", "ppx_driver,ppx_deriver"],
-    ppx = ":ppxlib_metaquot",
-    ppx_args = [
-        # do not sort (buildifier)
-        "-cookie",
-        "library-name=\"ppx_version\"",
-        "-corrected-suffix",
-        ".ppx-corrected",
-    ],
-    visibility = ["//visibility:public"],
-    deps = [
-        # do not sort (buildifier)
-        # "@//Users/gar/coda/gitfork/src/external/ppx_version/src",
-        "@opam//pkg:ppx_bin_prot",
-        "@opam//pkg:lens.ppx_deriving",
-        "@opam//pkg:ppx_deriving.std",
-        "@opam//pkg:ppx_sexp_conv",
-        "@opam//pkg:ppx_compare",
-        "@opam//pkg:ppx_enumerate",
-        "@opam//pkg:ppx_fields_conv",
-        "@opam//pkg:ppx_hash",
-        "@opam//pkg:ppx_deriving_yojson",
-        ":ppx_version",
-    ],
-)

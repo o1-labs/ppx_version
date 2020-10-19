@@ -1,9 +1,49 @@
-package(default_visibility = ["//visibility:public"])
+config_setting(
+    name = "enable_always_link",
+    flag_values = {"//:always-link": str(True)},
+)
 
-config_setting( name = "enable_verbose",
-                flag_values = { "//:verbose": "True" })
-config_setting( name = "disable_verbose",
-                flag_values = { "//:verbose": "False" })
+config_setting(
+    name = "disable_always_link",
+    flag_values = {"//:always-link": str(False)},
+)
 
-config_setting( name = "always_link",
-                flag_values = { "@//:always_link": "True" })
+config_setting(
+    name = "enable_emit_cmt",
+    flag_values = {"//:emit-cmt": str(True)},
+)
+
+config_setting(
+    name = "disable_emit_cmt",
+    flag_values = {"//:emit-cmt": str(False)},
+)
+
+config_setting(
+    name = "enable_debug",
+    flag_values = {"//:debug": str(True)},
+)
+
+config_setting(
+    name = "disable_debug",
+    flag_values = {"//:debug": str(False)},
+)
+
+config_setting(
+    name = "enable_threads",
+    flag_values = {"//:threads": str(True)},
+)
+
+config_setting(
+    name = "disable_threads",
+    flag_values = {"//:threads": str(False)},
+)
+
+config_setting(
+    name = "enable_verbose",
+    flag_values = {"//:verbose": str(True)},
+)
+
+config_setting(
+    name = "disable_verbose",
+    flag_values = {"//:verbose": str(False)},
+)
