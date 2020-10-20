@@ -1,4 +1,3 @@
-load("@bazel_skylib//rules:build_test.bzl", "build_test")
 load(
     "@obazl_rules_ocaml//ocaml:rules.bzl",
     "ocaml_executable",
@@ -6,9 +5,6 @@ load(
     "ocaml_module",
     "ppx_executable",
     "ppx_test",
-    "ppx_diff_test",
-    "ppx_fail_test",
-    "ppx_transform"
 )
 
 COMMON_OPTS = select({
@@ -17,17 +13,16 @@ COMMON_OPTS = select({
 }) + []
 
 LINK_OPTS = select({
-    "//bzl/config:always_link": ["-linkall"],
+    "//bzl/config:enable_always_link": ["-linkall"],
     "//conditions:default": [],
 }) + []
 
 IMPL_OPTS = COMMON_OPTS + LINK_OPTS + []
 INTF_OPTS = COMMON_OPTS + LINK_OPTS + []
 
+PPX_COOKIES = {"-cookie": "ppx_version"}
 PPX_ARGS = [
     # do not sort (buildifier)
-    "-cookie",
-    "library-name=\"ppx_version\"",
     "-corrected-suffix",
     ".ppx-corrected",
 ]
@@ -72,624 +67,264 @@ test_suite(
 
 ################################################################
 ppx_test(
-    name = "good_version_syntax",
-    src  = "good_version_syntax.ml",
-    ppx  = ":ppx_exe",
-    deps = ["@opam//pkg:core_kernel"],
+    name    = "good_version_syntax",
+    src     = "good_version_syntax.ml",
+    expect  = "expect/good_version_syntax.ml",
+    ppx     = ":ppx",
     timeout = "short"
 )
 
-# ocaml_module(
-#     name = "good_version_syntax.cm_",
-#     src  = "good_version_syntax.ml",
-#     ppx = ":ppx_exe",
-#     # ppx  = {":ppx_exe" : """
-#     # -cookie 'library-name="ppx_version_test"' -corrected-suffix .ppx-corrected
-#     # """,
-#     deps = ["@opam//pkg:core_kernel",            ## testing @opam/@_opam
-#             "@zopam//lib/ppxlib:ppxlib",
-#             ]
-# )
-
 ppx_test(
-    name = "versioned_good",
-    src  = "versioned_good.ml",
-    ppx  = ":ppx_exe",
-    deps = ["@opam//pkg:core_kernel"],
-    timeout = "short",
-)
-
-################################################################
-ppx_diff_test(
-    name          = "bad_version_syntax_bin_io_in_functor",
-    src           = "bad_version_syntax_bin_io_in_functor.ml",
-    expected      = "expected/bad_version_syntax_bin_io_in_functor.ml",
-    ppx           = ":ppx_exe",
-    verbose       = True,
-    deps          = ["@opam//pkg:core_kernel"],
-    timeout       = "short",
-)
-
-ocaml_module(
-    name          = "bad_version_syntax_bin_io_in_functor_compile",
-    src           = "bad_version_syntax_bin_io_in_functor.ml",
-    opts = IMPL_OPTS,
-    ppx = ":ppx_exe",
-    # ppx_args = [
-    #     # do not sort (buildifier)
-    #     "-cookie",
-    #     "library-name=\"versioned_module_good\"",
-    #     "-corrected-suffix",
-    #     ".ppx-corrected",
-    # ],
-    visibility = ["//visibility:public"],
-    deps = [
-        # do not sort (buildifier)
-        "@opam//pkg:core_kernel",
-    ],
-)
-
-################################################################
-# ppx_transform(
-#     name          = "bad_version_syntax_extension_x",
-#     src           = "bad_version_syntax_extension.ml",
-#     ppx           = ":ppx_exe",
-#     output_format = PPX_OUTPUT_FORMAT,
-#     deps          = ["@opam//pkg:core_kernel"],
-# )
-
-ppx_diff_test(
-    name          = "bad_version_syntax_extension",
-    src           = "bad_version_syntax_extension.ml",
-    expected      = "expected/bad_version_syntax_extension.ml",
-    ppx           = ":ppx_exe",
-    verbose       = True,
-    deps          = ["@opam//pkg:core_kernel"],
-    timeout       = "short",
-)
-
-################################################################
-ppx_test(
-    name = "versioned_module_good",
-    src  = "versioned_good.ml",
-    ppx  = ":ppx_exe",
-    deps = ["@opam//pkg:core_kernel"],
-    timeout = "short",
-)
-
-# ocaml_executable(
-#     name = "versioned_module_good.exe",
-#     opts = IMPL_OPTS,
-#     visibility = ["//visibility:public"],
-#     deps = [
-#         # do not sort (buildifier)
-#         ":versioned_module_good.cm_",
-#     ],
-# )
-
-# ocaml_module(
-#     name = "versioned_module_good.cm_",
-#     src  = "versioned_module_good.ml",
-#     opts = IMPL_OPTS,
-#     ppx = ":ppx_exe",
-#     deps = [
-#         # do not sort (buildifier)
-#         "@opam//pkg:core_kernel",
-#     ],
-# )
-
-ppx_test(
-    name = "versioned_sig_good_mli",
-    src  = "versioned_sig_good.mli",
-    ppx  = ":ppx_exe",
-    verbose = True,
-    deps = ["@opam//pkg:core_kernel"],
-    timeout = "short",
+    name    = "versioned_good",
+    src     = "versioned_good.ml",
+    expect  = "expect/versioned_good.ml",
+    ppx     = ":ppx",
+    timeout = "short"
 )
 
 ppx_test(
-    name = "versioned_sig_good_ml",
-    src  = "versioned_sig_good.ml",
-    ppx  = ":ppx_exe",
-    verbose = True,
-    deps = ["@opam//pkg:core_kernel"],
-    timeout = "short",
+    name    = "bad_version_syntax_bin_io_in_functor",
+    src     = "bad_version_syntax_bin_io_in_functor.ml",
+    expect  = "expect/bad_version_syntax_bin_io_in_functor.ml",
+    ppx     = ":ppx",
+    timeout = "short"
 )
 
-# ocaml_executable(
-#     name = "versioned_sig_good.exe",
-#     opts = IMPL_OPTS,
-#     visibility = ["//visibility:public"],
-#     deps = [
-#         # do not sort (buildifier)
-#         ":versioned_sig_good.cm_",
-#     ],
-# )
-
-# ocaml_interface(
-#     name = "versioned_sig_good.cmi",
-#     intf = "versioned_sig_good.mli",
-#     opts = INTF_OPTS,
-#     ppx = ":ppx_exe",
-#     ppx_args = [
-#         # do not sort (buildifier)
-#         "-cookie",
-#         "library-name=\"versioned_sig_good\"",
-#         "-corrected-suffix",
-#         ".ppx-corrected",
-#     ],
-#     deps = [
-#         # do not sort (buildifier)
-#         "@opam//pkg:core_kernel",
-#     ],
-# )
-
-# ocaml_module(
-#     name = "versioned_sig_good.cm_",
-#     intf = ":versioned_sig_good.cmi",
-#     src  = "versioned_sig_good.ml",
-#     opts = IMPL_OPTS,
-#     ppx = ":ppx_exe",
-#     ppx_args = [
-#         # do not sort (buildifier)
-#         "-cookie",
-#         "library-name=\"versioned_sig_good\"",
-#         "-corrected-suffix",
-#         ".ppx-corrected",
-#     ],
-#     visibility = ["//visibility:public"],
-#     deps = [
-#         # do not sort (buildifier)
-#         "@opam//pkg:core_kernel",
-#     ],
-# )
-
-################################################################
-ppx_transform(
-    name = "bad_version_syntax_missing_versioned_x",
-    src  = "bad_version_syntax_missing_versioned.ml",
-    ppx  = ":ppx_exe",
-    # args = [
-    #     # do not sort (buildifier)
-    #     "-cookie",
-    #     "'library-name=\"ppx_version_test\"'",
-    #     "-corrected-suffix",
-    #     ".ppx-corrected",
-    #     # "-dparsetree",
-    #     # "-pretty",
-    #     # "-check",
-    #     # "-lint-version-syntax-warnings",
-    #     # "-print-transformations",
-    #     # "-print-passes",
-    # ],
-    output_format = PPX_OUTPUT_FORMAT,
-    # deps = ["@opam//pkg:core_kernel"],
+ppx_test(
+    name    = "bad_version_syntax_extension",
+    src     = "bad_version_syntax_extension.ml",
+    expect  = "expect/bad_version_syntax_extension.ml",
+    ppx     = ":ppx",
+    timeout = "short"
 )
 
-ppx_diff_test(
-    name = "bad_version_syntax_missing_versioned",
-    src  = "bad_version_syntax_missing_versioned.ml",
-    expected      = "expected/bad_version_syntax_missing_versioned.ml",
-    ppx           = ":ppx_exe",
-    verbose       = True,
-    deps          = ["@opam//pkg:core_kernel"],
-    timeout       = "short",
+ppx_test(
+    name    = "versioned_module_good",
+    src     = "versioned_good.ml",
+    expect  = "expect/versioned_good.ml",
+    ppx     = ":ppx",
+    timeout = "short"
 )
 
-ocaml_module(
-    name = "bad_version_syntax_missing_versioned_compile",
-    src  = "bad_version_syntax_missing_versioned.ml",
-    opts = IMPL_OPTS,
-    ppx = ":ppx_exe",
-    ppx_args = PPX_ARGS,
-    visibility = ["//visibility:public"],
-    deps = [
-        # do not sort (buildifier)
-        "@opam//pkg:core_kernel",
-    ],
+ppx_test(
+    name    = "versioned_sig_good_mli",
+    src     = "versioned_sig_good.mli",
+    expect  = "expect/versioned_sig_good.mli",
+    ppx     = ":ppx",
+    cookies = PPX_COOKIES,
+    args    = PPX_ARGS,
+    timeout = "short"
 )
 
-################################################################
-ppx_transform(
-    name          = "bad_versioned_in_functor_x",
-    src           = "bad_versioned_in_functor.ml",
-    ppx           = ":ppx_exe",
-    output_format = PPX_OUTPUT_FORMAT,
-    deps          = ["@opam//pkg:core_kernel"],
+ppx_test(
+    name    = "versioned_sig_good_ml",
+    src     = "versioned_sig_good.ml",
+    expect  = "expect/versioned_sig_good.ml",
+    ppx     = ":ppx",
+    cookies = PPX_COOKIES,
+    args    = PPX_ARGS,
+    timeout = "short"
 )
 
-ppx_diff_test(
-    name          = "bad_versioned_in_functor",
-    src           = "bad_versioned_in_functor.ml",
-    ppx           = ":ppx_exe",
-    timeout       = "short",
-    expected      = "expected/bad_versioned_in_functor.ml",
-    deps          = ["@opam//pkg:core_kernel"],
+ppx_test(
+    name    = "bad_version_syntax_missing_versioned",
+    src     = "bad_version_syntax_missing_versioned.ml",
+    expect  = "expect/bad_version_syntax_missing_versioned.ml",
+    ppx     = ":ppx",
+    timeout = "short"
 )
 
-################################################################
-ppx_transform(
-    name = "bad_versioned_in_nested_functor_x",
-    src = "bad_versioned_in_nested_functor.ml",
-    ppx  = ":ppx_exe",
-    # cookies = {
-    #     "library-name": "ppx_version_test"
-    # },
-    # args = [
-    #     # do not sort (buildifier)
-    #     "-cookie",
-    #     "'library-name=\"ppx_version_test\"'",
-    #     "-corrected-suffix",
-    #     ".ppx-corrected",
-    #     # "-dparsetree",
-    #     # "-pretty",
-    #     # "-check",
-    #     # "-lint-version-syntax-warnings",
-    #     # "-print-transformations",
-    #     # "-print-passes",
-    # ],
-    output_format = PPX_OUTPUT_FORMAT,
-    deps = ["@opam//pkg:core_kernel"],
+ppx_test(
+    name    = "bad_versioned_in_functor",
+    src     = "bad_versioned_in_functor.ml",
+    expect  = "expect/bad_versioned_in_functor.ml",
+    ppx     = ":ppx",
+    timeout = "short"
 )
 
-ppx_diff_test(
-    name = "bad_versioned_in_nested_functor",
-    ppx  = ":ppx_exe",
-    timeout  = "short",
-    src      = "bad_versioned_in_nested_functor.ml",
-    expected = "expected/bad_versioned_in_nested_functor.ml",
-    deps = ["@opam//pkg:core_kernel"],
+ppx_test(
+    name    = "bad_versioned_in_nested_functor",
+    src     = "bad_versioned_in_nested_functor.ml",
+    expect  = "expect/bad_versioned_in_nested_functor.ml",
+    ppx     = ":ppx",
+    timeout = "short"
 )
 
-################################################################
-ppx_transform(
-    name          = "bad_version_syntax_multiple_errors_x",
-    src           = "bad_version_syntax_multiple_errors.ml",
-    ppx           = ":ppx_exe",
-    output_format = PPX_OUTPUT_FORMAT,
-    deps          = ["@opam//pkg:core_kernel"],
-)
-
-ppx_diff_test(
+ppx_test(
     name          = "bad_version_syntax_multiple_errors",
     src           = "bad_version_syntax_multiple_errors.ml",
-    expected      = "expected/bad_version_syntax_multiple_errors.ml",
-    ppx           = ":ppx_exe",
-    verbose       = True,
+    expect        = "expect/bad_version_syntax_multiple_errors.ml",
+    ppx           = ":ppx",
     deps          = ["@opam//pkg:core_kernel"],
-    timeout       = "short",
+    timeout       = "short"
 )
 
-################################################################
-ppx_fail_test(
-    name = "versioned_bad_module_name",
-    src  = "versioned_bad_module_name.ml",
-    ppx  = ":ppx_exe",
-    expected = "\n".join([
-"Raised at file \"parsing/location.ml\", line 514, characters 16-61",
-"Called from file \"string.ml\", line 78, characters 31-49",
-"Called from file \"src/string0.ml\" (inlined), line 62, characters 16-37",
-"Called from file \"bazel-out/host/bin/src/Ppx_version__Versioned_util.ml\", line 31, characters 5-274",
-"Called from file \"bazel-out/host/bin/src/Ppx_version__Versioned_module.ml\", line 1764, characters 2-43",
-"Called from file \"bazel-out/host/bin/src/Ppx_version__Versioned_module.ml\", line 1831, characters 20-68",
-"Called from file \"list.ml\", line 117, characters 24-34",
-"Called from file \"src/list0.ml\" (inlined), line 22, characters 40-81",
-"Called from file \"bazel-out/host/bin/src/Ppx_version__Versioned_module.ml\", line 1823, characters 4-1023",
-"Called from file \"bazel-out/host/bin/src/Ppx_version__Versioned_module.ml\", line 2589, characters 7-69",
-"",
-"File \"test/versioned_bad_module_name.ml\", line 7, characters 13-15:",
-"Error: Versioning module name must be Vn, for some positive number n, got: \"Vx\"",
-    ]),
-    args = [
-        # do not sort (buildifier)
-        "-cookie",
-        "library-name=\"ppx_version_test\"",
-        "-corrected-suffix",
-        ".ppx-corrected",
-    ],
-    deps = ["@opam//pkg:core_kernel"],
-    timeout = "short",
+ppx_test(
+    name          = "versioned_bad_module_name",
+    src           = "versioned_bad_module_name.ml",
+    ppx           = ":ppx",
+    expect        = "expect/versioned_bad_module_name.stderr",
+    cookies       = PPX_COOKIES,
+    args          = PPX_ARGS,
+    deps          = ["@opam//pkg:core_kernel"],
+    timeout       = "short"
 )
 
-################################################################
-ppx_fail_test(
+ppx_test(
     name          = "versioned_bad_module_structure",
     src           = "versioned_bad_module_structure.ml",
-    ppx           = ":ppx_exe",
-    expected = "\n".join([
+    ppx           = ":ppx",
+    expect_stderr = "\n".join([
 "File \"test/versioned_bad_module_structure.ml\", line 6, characters 8-35:",
 "Error: Versioned type, not a label or variant, must have manifest (right-hand side)"
     ]),
-    deps = ["@opam//pkg:core_kernel"],
-    timeout = "short",
+    deps          = ["@opam//pkg:core_kernel"],
+    timeout       = "short"
 )
 
-################################################################
-ppx_fail_test(
-    name = "versioned_bad_version_name",
-    src  = "versioned_bad_version_name.ml",
-    ppx  = ":ppx_exe",
-    expected = "\n".join([
+ppx_test(
+    name          = "versioned_bad_version_name",
+    src           = "versioned_bad_version_name.ml",
+    ppx           = ":ppx",
+    expect_stderr = "\n".join([
 "File \"test/versioned_bad_version_name.ml\", line 7, characters 10-37:",
 "Error: Versioning module name must be Vn, for a positive number n, which cannot begin with 0, got: \"V01\""
     ]),
-    args = [
-        # do not sort (buildifier)
-        "-cookie",
-        "library-name=\"ppx_version_test\"",
-        "-corrected-suffix",
-        ".ppx-corrected",
-    ],
-    deps = ["@opam//pkg:core_kernel"],
-    timeout = "short",
+    cookies       = PPX_COOKIES,
+    args          = PPX_ARGS,
+    deps          = ["@opam//pkg:core_kernel"],
+    timeout       = "short"
 )
 
-ppx_fail_test(
-    name = "versioned_bad_wrapped_module_structure",
-    src  = "versioned_bad_wrapped_module_structure.ml",
-    ppx  = ":ppx_exe",
-    expected = "\n".join([
+ppx_test(
+    name          = "versioned_bad_wrapped_module_structure",
+    src           = "versioned_bad_wrapped_module_structure.ml",
+    ppx           = ":ppx",
+    expect_stderr = "\n".join([
 "File \"test/versioned_bad_wrapped_module_structure.ml\", line 5, characters 36-43:",
 "Error: Ppxlib.Deriving: generator '\\''version'\\'' doesn'\\''t accept argument '\\''wrapped'\\''"
     ]),
-    args = [
-        # do not sort (buildifier)
-        "-cookie",
-        "library-name=\"ppx_version_test\"",
-        "-corrected-suffix",
-        ".ppx-corrected",
-    ],
-    deps = ["@opam//pkg:core_kernel"],
-    timeout = "short",
+    cookies       = PPX_COOKIES,
+    args          = PPX_ARGS,
+    deps          = ["@opam//pkg:core_kernel"],
+    timeout       = "short"
 )
 
-ppx_fail_test(
-    name = "versioned_bad_type_name",
-    src  = "versioned_bad_type_name.ml",
-    ppx  = ":ppx_exe",
-    expected = "\n".join([
-"Raised at file \"parsing/location.ml\", line 514, characters 16-61",
-"Called from file \"bazel-out/host/bin/src/Ppx_version__Versioned_module.ml\", line 256, characters 21-36",
-"Called from file \"bazel-out/host/bin/src/Ppx_version__Versioned_module.ml\", line 1794, characters 6-52",
-"Called from file \"bazel-out/host/bin/src/Ppx_version__Versioned_module.ml\", line 1831, characters 20-68",
-"Called from file \"list.ml\", line 117, characters 24-34",
-"Called from file \"src/list0.ml\" (inlined), line 22, characters 40-81",
-"Called from file \"bazel-out/host/bin/src/Ppx_version__Versioned_module.ml\", line 1823, characters 4-1023",
-"Called from file \"bazel-out/host/bin/src/Ppx_version__Versioned_module.ml\", line 2589, characters 7-69",
-"",
-"File \"test/versioned_bad_type_name.ml\", line 7, characters 8-39:",
-"Error: Expected a single public type t.",
-    ]),
-    args = [
-        # do not sort (buildifier)
-        "-cookie",
-        "library-name=\"ppx_version_test\"",
-        "-corrected-suffix",
-        ".ppx-corrected",
-    ],
-    deps = ["@opam//pkg:core_kernel"],
-    timeout = "short",
+ppx_test(
+    name          = "versioned_bad_type_name",
+    src           = "versioned_bad_type_name.ml",
+    expect        = "expect/versioned_bad_type_name.stderr",
+    ppx           = ":ppx",
+    cookies       = PPX_COOKIES,
+    args          = PPX_ARGS,
+    deps          = ["@opam//pkg:core_kernel"],
+    timeout       = "short"
 )
 
-ppx_fail_test(
-    name = "versioned_bad_unnumbered",
-    src  = "versioned_bad_unnumbered.ml",
-    ppx  = ":ppx_exe",
-    expected = "\n".join([
-# The ppx_fail_test rule puts single quotes around this string, so we
-# need to escape embedded single quotes using '\\'', which becomes '\''.
+ppx_test(
+    name          = "versioned_bad_unnumbered",
+    src           = "versioned_bad_unnumbered.ml",
+    ppx           = ":ppx",
+    expect_stderr = "\n".join([
 "File \"test/versioned_bad_unnumbered.ml\", line 4, characters 38-48:",
 "Error: Ppxlib.Deriving: generator '\\''version'\\'' doesn'\\'t' accept argument '\\''unnumbered'\\''"
     ]),
-    # args = [
-    #     # do not sort (buildifier)
-    #     "-cookie",
-    #     "library-name=\"ppx_version_test\"",
-    #     "-corrected-suffix",
-    #     ".ppx-corrected",
-    # ],
-    deps = ["@opam//pkg:core_kernel"],
-    timeout = "short",
-)
-
-ppx_fail_test(
-    name = "versioned_bad_option",
-    src = "versioned_bad_option.ml",
-    ppx  = ":ppx_exe",
-    expected = "\n".join(["File \"test/versioned_bad_option.ml\", line 9, characters 17-26:",
-                          "Error: \"optin\" is neither an OCaml type constructor nor a versioned type"]),
-    args = [
-        # do not sort (buildifier)
-        "-cookie",
-        "library-name=\"ppx_version_test\"",
-        "-corrected-suffix",
-        ".ppx-corrected",
-    ],
-    deps = ["@opam//pkg:core_kernel"],
-    timeout = "short",
-)
-
-################################################################
-ppx_transform(
-    name          = "versioned_bad_contained_types_x",
-    src           = "versioned_bad_contained_types.ml",
-    ppx           = ":ppx_exe",
-    output_format = PPX_OUTPUT_FORMAT,
+    cookies       = PPX_COOKIES,
+    args          = PPX_ARGS,
     deps          = ["@opam//pkg:core_kernel"],
+    timeout       = "short"
 )
 
-ppx_diff_test(
+ppx_test(
+    name          = "versioned_bad_option",
+    src           = "versioned_bad_option.ml",
+    ppx           = ":ppx",
+    expect_stderr = "\n".join([
+"File \"test/versioned_bad_option.ml\", line 9, characters 17-26:",
+"Error: \"optin\" is neither an OCaml type constructor nor a versioned type"]),
+    cookies       = PPX_COOKIES,
+    args          = PPX_ARGS,
+    deps          = ["@opam//pkg:core_kernel"],
+    timeout       = "short"
+)
+
+ppx_test(
     name          = "versioned_bad_contained_types",
     src           = "versioned_bad_contained_types.ml",
-    expected      = "expected/versioned_bad_contained_types.ml",
-    ppx           = ":ppx_exe",
-    verbose       = True,
+    expect        = "expect/versioned_bad_contained_types.ml",
+    ppx           = ":ppx",
     deps          = ["@opam//pkg:core_kernel"],
-    timeout       = "short",
+    timeout       = "short"
 )
 
-ocaml_module(
-    name          = "versioned_bad_contained_types_compile",
-    src           = "versioned_bad_contained_types.ml",
-    ppx           = ":ppx_exe",
-    # output_format = PPX_OUTPUT_FORMAT,
-    deps          = ["@opam//pkg:core_kernel"],
-)
-
-################################################################
-ppx_fail_test(
-    name = "versioned_bad_arrow_type",
-    src = "versioned_bad_arrow_type.ml",
-    ppx  = ":ppx_exe",
-    # verbose = True,
-    expected = "\n".join([
+ppx_test(
+    name          = "versioned_bad_arrow_type",
+    src           = "versioned_bad_arrow_type.ml",
+    ppx           = ":ppx",
+    expect_stderr = "\n".join([
 "File \"test/versioned_bad_arrow_type.ml\", line 8, characters 15-28:",
 "Error: ppx_bin_shape: unsupported type: int -> string"
     ]),
-    # args = [
-    #     # do not sort (buildifier)
-    #     "-cookie",
-    #     "library-name=\"ppx_version_test\"",
-    #     "-corrected-suffix",
-    #     ".ppx-corrected",
-    # ],
-    deps = ["@opam//pkg:core_kernel"],
-    timeout = "short",
+    cookies       = PPX_COOKIES,
+    args          = PPX_ARGS,
+    timeout       = "short"
 )
 
-################################################################
-ppx_fail_test(
-    name = "versioned_module_bad_stable_name",
-    src = "versioned_module_bad_stable_name.ml",
-    timeout = "short",
-    ppx  = ":ppx_exe",
-    expected = "\n".join([
-"Raised at file \"parsing/location.ml\", line 514, characters 16-61",
-"Called from file \"bazel-out/host/bin/src/Ppx_version__Versioned_util.ml\", line 6, characters 30-37",
-"Called from file \"bazel-out/host/bin/src/Ppx_version__Versioned_module.ml\", line 2587, characters 19-72",
-"",
-"File \"test/versioned_module_bad_stable_name.ml\", line 4, characters 22-25:",
-"Error: Expected a module named Stable, but got a module named Bad.",
-    ]),
-    # args = [
-    #     # do not sort (buildifier)
-    #     "-cookie",
-    #     "library-name=\"ppx_version_test\"",
-    #     "-corrected-suffix",
-    #     ".ppx-corrected",
-    # ],
-    deps = [
-        # do not sort (buildifier)
-        "@opam//pkg:core_kernel",
-    ],
+ppx_test(
+    name          = "versioned_module_bad_stable_name",
+    src           = "versioned_module_bad_stable_name.ml",
+    expect        = "expect/versioned_module_bad_stable_name.stderr",
+    ppx           = ":ppx",
+    cookies       = PPX_COOKIES,
+    args          = PPX_ARGS,
+    timeout       = "short"
 )
 
-################################################################
-ppx_fail_test(
-    name = "versioned_module_bad_version_name",
-    src = "versioned_module_bad_version_name.ml",
-    ppx  = ":ppx_exe",
-    expected = "\n".join([
-"Raised at file \"parsing/location.ml\", line 514, characters 16-61",
-"Called from file \"bazel-out/host/bin/src/Ppx_version__Versioned_module.ml\", line 1764, characters 2-43",
-"Called from file \"bazel-out/host/bin/src/Ppx_version__Versioned_module.ml\", line 1831, characters 20-68",
-"Called from file \"list.ml\", line 117, characters 24-34",
-"Called from file \"src/list0.ml\" (inlined), line 22, characters 40-81",
-"Called from file \"bazel-out/host/bin/src/Ppx_version__Versioned_module.ml\", line 1823, characters 4-1023",
-"Called from file \"bazel-out/host/bin/src/Ppx_version__Versioned_module.ml\", line 2589, characters 7-69",
-"",
-"File \"test/versioned_module_bad_version_name.ml\", line 6, characters 11-14:",
-"Error: Versioning module containing versioned type must be named Vn, for some number n",
-    ]),
-    # args = [
-    #     # do not sort (buildifier)
-    #     "-cookie",
-    #     "library-name=\"ppx_version_test\"",
-    #     "-corrected-suffix",
-    #     ".ppx-corrected",
-    # ],
-    deps = ["@opam//pkg:core_kernel"],
-    timeout = "short",
-)
-
-ppx_fail_test(
-    name = "versioned_module_bad_missing_type",
-    src = "versioned_module_bad_missing_type.ml",
-    ppx  = ":ppx_exe",
-    expected = "\n".join([
-"Raised at file \"parsing/location.ml\", line 514, characters 16-61",
-"Called from file \"bazel-out/host/bin/src/Ppx_version__Versioned_module.ml\", line 1780, characters 10-107",
-"Called from file \"bazel-out/host/bin/src/Ppx_version__Versioned_module.ml\", line 1831, characters 20-68",
-"Called from file \"list.ml\", line 117, characters 24-34",
-"Called from file \"src/list0.ml\" (inlined), line 22, characters 40-81",
-"Called from file \"bazel-out/host/bin/src/Ppx_version__Versioned_module.ml\", line 1823, characters 4-1023",
-"Called from file \"bazel-out/host/bin/src/Ppx_version__Versioned_module.ml\", line 2589, characters 7-69",
-"",
-"File \"test/versioned_module_bad_missing_type.ml\", line 6, characters 16-26:",
-"Error: Expected a type declaration in this structure.",
-    ]),
-    args = [
-        # do not sort (buildifier)
-        "-cookie",
-        "library-name=\"ppx_version_test\"",
-        "-corrected-suffix",
-        ".ppx-corrected",
-    ],
-    deps = ["@opam//pkg:core_kernel"],
-    timeout = "short",
-)
-
-ppx_fail_test(
-    name = "versioned_module_bad_version_order",
-    src = "versioned_module_bad_version_order.ml",
-    ppx  = ":ppx_exe",
-    expected = "\n".join([
-"Raised at file \"parsing/location.ml\", line 514, characters 16-61",
-"Called from file \"src/option.ml\" (inlined), line 30, characters 14-17",
-"Called from file \"bazel-out/host/bin/src/Ppx_version__Versioned_module.ml\", line 1766, characters 3-408",
-"Called from file \"bazel-out/host/bin/src/Ppx_version__Versioned_module.ml\", line 1831, characters 20-68",
-"Called from file \"list.ml\", line 117, characters 24-34",
-"Called from file \"src/list0.ml\" (inlined), line 22, characters 40-81",
-"Called from file \"bazel-out/host/bin/src/Ppx_version__Versioned_module.ml\", line 1823, characters 4-1023",
-"Called from file \"bazel-out/host/bin/src/Ppx_version__Versioned_module.ml\", line 2589, characters 7-69",
-"",
-"File \"test/versioned_module_bad_version_order.ml\", line 10, characters 4-50:",
-"Error: Versioned modules must be listed in decreasing order.",
-    ]),
-    args = [
-        # do not sort (buildifier)
-        "-cookie",
-        "library-name=\"ppx_version_test\"",
-        "-corrected-suffix",
-        ".ppx-corrected",
-    ],
-    deps = ["@opam//pkg:core_kernel"],
-    timeout = "short",
-)
-
-################################################################
-ppx_transform(
-    name          = "versioned_module_bad_missing_to_latest_x",
-    src           = "versioned_module_bad_missing_to_latest.ml",
-    ppx           = ":ppx_exe",
-    output_format = PPX_OUTPUT_FORMAT,
+ppx_test(
+    name          = "versioned_module_bad_version_name",
+    src           = "versioned_module_bad_version_name.ml",
+    expect        = "expect/versioned_module_bad_version_name.stderr",
+    ppx           = ":ppx",
+    cookies       = PPX_COOKIES,
+    args          = PPX_ARGS,
     deps          = ["@opam//pkg:core_kernel"],
+    timeout       = "short"
 )
 
-ppx_diff_test(
+ppx_test(
+    name          = "versioned_module_bad_missing_type",
+    src           = "versioned_module_bad_missing_type.ml",
+    expect        = "expect/versioned_module_bad_missing_type.stderr",
+    ppx           = ":ppx",
+    cookies       = PPX_COOKIES,
+    args          = PPX_ARGS,
+    deps          = ["@opam//pkg:core_kernel"],
+    timeout       = "short"
+)
+
+ppx_test(
+    name          = "versioned_module_bad_version_order",
+    src           = "versioned_module_bad_version_order.ml",
+    expect        = "expect/versioned_module_bad_version_order.stderr",
+    ppx           = ":ppx",
+    cookies       = PPX_COOKIES,
+    args          = PPX_ARGS,
+    deps          = ["@opam//pkg:core_kernel"],
+    timeout       = "short"
+)
+
+ppx_test(
     name          = "versioned_module_bad_missing_to_latest",
+    expect        = "expect/versioned_module_bad_missing_to_latest.ml",
     src           = "versioned_module_bad_missing_to_latest.ml",
-    expected      = "expected/versioned_module_bad_missing_to_latest.ml",
-    ppx           = ":ppx_exe",
-    verbose       = True,
+    ppx           = ":ppx",
     deps          = ["@opam//pkg:core_kernel"],
-    timeout       = "short",
+    timeout       = "short"
 )
 
-################################################################
 ################################################################
 ppx_executable(
-    name = "ppx_exe",
+    name = "ppx",
     srcs = ["@obazl//ppxlib:driver_standalone_runner"],
     opts = select({
         "//bzl/config:enable_verbose": ["-verbose"],

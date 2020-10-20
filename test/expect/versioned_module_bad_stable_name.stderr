@@ -1,0 +1,6 @@
+Raised at file "parsing/location.ml", line 514, characters 16-61
+Called from file "bazel-out/host/bin/src/Ppx_version__Versioned_util.ml", line 6, characters 30-37
+Called from file "bazel-out/host/bin/src/Ppx_version__Versioned_module.ml", line 2587, characters 19-72
+
+File "test/versioned_module_bad_stable_name.ml", line 4, characters 22-25:
+Error: Expected a module named Stable, but got a module named Bad.
