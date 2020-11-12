@@ -1,0 +1,242 @@
+## master_pkg.mustache
+## OBAZL GENERATED FILE ## To retain edits (prevent overwrite), delete this line.
+
+load(
+    "@obazl_rules_ocaml//ocaml:rules.bzl",
+    "ocaml_ns",
+    "ppx_archive",
+    "ppx_module",
+)
+load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
+load(
+    "//:BUILD.bzl",
+    "REPO_NS_MODULE_OPTS",
+    "REPO_PPX_ARCHIVE_OPTS",
+    "REPO_PPX_MODULE_OPTS",
+)
+load(
+    ":BUILD.bzl",
+    "PKG_NS_MODULE_OPTS",
+    "PKG_PPX_ARCHIVE_OPTS",
+    "PKG_PPX_MODULE_OPTS",
+)
+
+## stanza_library_ppx.mustache
+################################################################
+## STANZA 1: PPX_VERSION
+################################################################
+PPX_VERSION_PPX_MODULE_OPTS = REPO_PPX_MODULE_OPTS + PKG_PPX_MODULE_OPTS + ["-linkall", "-opaque"]
+
+PPX_VERSION_PPX_ARCHIVE_OPTS = REPO_PPX_ARCHIVE_OPTS + PKG_PPX_ARCHIVE_OPTS + ["-linkall", "-opaque"]
+
+PPX_VERSION_NS_MODULE_OPTS = REPO_NS_MODULE_OPTS + PKG_NS_MODULE_OPTS + ["-linkall", "-opaque"]
+
+PPX_VERSION_DEPS = [
+    # do not sort (buildifier)
+    "@opam//pkg:compiler-libs.common",
+    "@opam//pkg:ppxlib",
+    "@opam//pkg:ppx_bin_prot",
+    "@opam//pkg:core_kernel",
+]
+
+PPX_VERSION_PPX = "//bzl/ppx:ppx.exe[ppxlib.metaquot]"
+
+PPX_VERSION_PPX_ARGS = [
+    # do not sort (buildifier)
+]
+
+## ppx_archive.mustache
+############
+ppx_archive(
+    name = "ppx_version",
+    opts = PPX_VERSION_PPX_ARCHIVE_OPTS,
+    visibility = ["//visibility:public"],
+    deps = PPX_VERSION_DEPS + [
+        # do not sort (buildifier)
+        ":Bin_io_unversioned",
+        ":Dummy_derivers",
+        ":Lint_version_syntax",
+        ":Versioned_module",
+        ":Versioned_util",
+        ":Versioned_type",
+    ],
+    lazy_deps = [
+        "//src/runtime:ppx_version_runtime",
+    ]
+)
+
+## ocaml_ns.mustache
+################
+ocaml_ns(
+    name = "Ppx_version_ns",
+    ns = "ppx_version",
+    opts = PPX_VERSION_NS_MODULE_OPTS,
+    submodules = [
+        # do not sort (buildifier)
+        "bin_io_unversioned.ml",
+        "dummy_derivers.ml",
+        "lint_version_syntax.ml",
+        "versioned_module.ml",
+        "versioned_type.ml",
+        "versioned_util.ml",
+    ],
+)
+
+## ppx_module.mustache
+###########
+ppx_module(
+    name = "Bin_io_unversioned",
+    src = "bin_io_unversioned.ml",
+    lazy_deps = [
+        # do not sort (buildifier)
+        "@ppx_version//src/runtime:ppx_version_runtime",
+    ],
+    ns        = ":Ppx_version_ns",
+    opts = PPX_VERSION_PPX_MODULE_OPTS,
+    ppx = PPX_VERSION_PPX,
+    ppx_args = PPX_VERSION_PPX_ARGS,
+    deps = [
+        # do not sort (buildifier)
+        "@opam//pkg:compiler-libs.common",
+        "@opam//pkg:ppxlib",
+        "@opam//pkg:ppx_bin_prot",
+        "@opam//pkg:core_kernel",
+        "Versioned_util",
+    ],
+)
+
+## ppx_module.mustache
+###########
+ppx_module(
+    name = "Dummy_derivers",
+    src = "dummy_derivers.ml",
+    lazy_deps = [
+        # do not sort (buildifier)
+        "@ppx_version//src/runtime:ppx_version_runtime",
+    ],
+    ns        = ":Ppx_version_ns",
+    opts = PPX_VERSION_PPX_MODULE_OPTS,
+    ppx = PPX_VERSION_PPX,
+    ppx_args = PPX_VERSION_PPX_ARGS,
+    deps = [
+        # do not sort (buildifier)
+        "@opam//pkg:compiler-libs.common",
+        "@opam//pkg:ppxlib",
+        "@opam//pkg:ppx_bin_prot",
+        "@opam//pkg:core_kernel",
+    ],
+)
+
+## ppx_module.mustache
+###########
+ppx_module(
+    name = "Lint_version_syntax",
+    src = "lint_version_syntax.ml",
+    lazy_deps = [
+        # do not sort (buildifier)
+        "@ppx_version//src/runtime:ppx_version_runtime",
+    ],
+    ns        = ":Ppx_version_ns",
+    opts = PPX_VERSION_PPX_MODULE_OPTS,
+    ppx = PPX_VERSION_PPX,
+    ppx_args = PPX_VERSION_PPX_ARGS,
+    deps = [
+        # do not sort (buildifier)
+        "@opam//pkg:compiler-libs.common",
+        "@opam//pkg:ppxlib",
+        "@opam//pkg:ppx_bin_prot",
+        "@opam//pkg:core_kernel",
+        "Versioned_util",
+    ],
+)
+
+## ppx_module.mustache
+###########
+ppx_module(
+    name = "Versioned_module",
+    src = "versioned_module.ml",
+    lazy_deps = [
+        # do not sort (buildifier)
+        "@ppx_version//src/runtime:ppx_version_runtime",
+    ],
+    ns        = ":Ppx_version_ns",
+    opts = PPX_VERSION_PPX_MODULE_OPTS,
+    ppx = PPX_VERSION_PPX,
+    ppx_args = PPX_VERSION_PPX_ARGS,
+    deps = [
+        # do not sort (buildifier)
+        "@opam//pkg:compiler-libs.common",
+        "@opam//pkg:ppxlib",
+        "@opam//pkg:ppx_bin_prot",
+        "@opam//pkg:core_kernel",
+        "Versioned_util",
+    ],
+)
+
+## ppx_module.mustache
+###########
+ppx_module(
+    name = "Versioned_type",
+    src = "versioned_type.ml",
+    lazy_deps = [
+        # do not sort (buildifier)
+        "@ppx_version//src/runtime:ppx_version_runtime",
+    ],
+    ns        = ":Ppx_version_ns",
+    opts = PPX_VERSION_PPX_MODULE_OPTS,
+    ppx = PPX_VERSION_PPX,
+    ppx_args = PPX_VERSION_PPX_ARGS,
+    deps = [
+        # do not sort (buildifier)
+        "@opam//pkg:compiler-libs.common",
+        "@opam//pkg:ppxlib",
+        "@opam//pkg:ppx_bin_prot",
+        "@opam//pkg:core_kernel",
+        "Versioned_module",
+        "Versioned_util",
+    ],
+)
+
+## ppx_module.mustache
+###########
+ppx_module(
+    name = "Versioned_util",
+    src = "versioned_util.ml",
+    lazy_deps = [
+        # do not sort (buildifier)
+        "@ppx_version//src/runtime:ppx_version_runtime",
+    ],
+    ns        = ":Ppx_version_ns",
+    opts = PPX_VERSION_PPX_MODULE_OPTS,
+    ppx = PPX_VERSION_PPX,
+    ppx_args = PPX_VERSION_PPX_ARGS,
+    deps = [
+        # do not sort (buildifier)
+        "@opam//pkg:compiler-libs.common",
+        "@opam//pkg:ppxlib",
+        "@opam//pkg:ppx_bin_prot",
+        "@opam//pkg:core_kernel",
+    ],
+)
+
+###################################################################
+################ Configuration Settings ###########################
+bool_flag(
+    name = "debug",
+    build_setting_default = True,
+)
+
+config_setting(
+    name = "enable_debug",
+    flag_values = {":debug": str(True)},
+)
+
+bool_flag(
+    name = "verbose",
+    build_setting_default = False,
+)
+
+config_setting(
+    name = "enable_verbose",
+    flag_values = {":verbose": str(True)},
+)

@@ -1,0 +1,76 @@
+load(
+    "@obazl_rules_ocaml//ocaml:rules.bzl",
+    "ocaml_archive",
+    "ocaml_module",
+    "ocaml_ns",
+)
+load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
+load(
+    "//:BUILD.bzl",
+    "REPO_ARCHIVE_OPTS",
+    "REPO_MODULE_OPTS",
+    "REPO_NS_MODULE_OPTS",
+)
+load(
+    ":BUILD.bzl",
+    "PKG_ARCHIVE_OPTS",
+    "PKG_MODULE_OPTS",
+    "PKG_NS_MODULE_OPTS",
+)
+
+################################################################
+## STANZA 1: LIBRARY PPX_VERSION_RUNTIME
+################################################################
+PPX_VERSION_RUNTIME_MODULE_OPTS = REPO_MODULE_OPTS + PKG_MODULE_OPTS
+
+PPX_VERSION_RUNTIME_ARCHIVE_OPTS = REPO_ARCHIVE_OPTS + PKG_ARCHIVE_OPTS + []
+
+PPX_VERSION_RUNTIME_NS_MODULE_OPTS = REPO_NS_MODULE_OPTS + PKG_NS_MODULE_OPTS
+
+PPX_VERSION_RUNTIME_DEPS = ["@opam//pkg:core_kernel"]
+
+ocaml_archive(
+    name = "ppx_version_runtime",
+    opts = PPX_VERSION_RUNTIME_ARCHIVE_OPTS,
+    visibility = ["//visibility:public"],
+    deps = PPX_VERSION_RUNTIME_DEPS + [":_Serialization"]
+)
+
+ocaml_ns(
+    name = "Ppx_version_runtime_ns",
+    ns = "ppx_version_runtime",
+    opts = PPX_VERSION_RUNTIME_NS_MODULE_OPTS,
+    submodules = ["serialization.ml"]
+)
+
+#############
+ocaml_module(
+    name = "_Serialization",
+    src = "serialization.ml",
+    ns = ":Ppx_version_runtime_ns",
+    opts = PPX_VERSION_RUNTIME_MODULE_OPTS,
+    deps = PPX_VERSION_RUNTIME_DEPS,
+    visibility = ["//visibility:public"]
+)
+
+###################################################################
+################ Configuration Settings ###########################
+bool_flag(
+    name = "debug",
+    build_setting_default = True,
+)
+
+config_setting(
+    name = "enable_debug",
+    flag_values = {":debug": str(True)},
+)
+
+bool_flag(
+    name = "verbose",
+    build_setting_default = False,
+)
+
+config_setting(
+    name = "enable_verbose",
+    flag_values = {":verbose": str(True)},
+)

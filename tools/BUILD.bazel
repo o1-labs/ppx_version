@@ -1,0 +1,114 @@
+load(
+    "@obazl_rules_ocaml//ocaml:rules.bzl",
+    "ocaml_module",
+    "ppx_executable",
+)
+
+COMMON_OPTS = select({
+    "//:enable_verbose": ["-verbose"],
+    "//conditions:default": [],
+}) + []
+
+LINK_OPTS = ["-linkall"]
+# LINK_OPTS = select({
+#     "//:enable_always_link": ["-linkall"],
+#     "//conditions:default": [],
+# })
+
+EXEC_OPTS = COMMON_OPTS + LINK_OPTS
+IMPL_OPTS = COMMON_OPTS + LINK_OPTS
+PPX_EXEC_OPTS = COMMON_OPTS + LINK_OPTS + ["-predicates", "ppx_deriver"]
+
+PPX_ARGS = [
+    # do not sort (buildifier)
+    "-cookie",
+    "library-name=\"ppx_version\"",
+    "-corrected-suffix",
+    ".ppx-corrected",
+]
+
+################################################################
+ppx_executable(
+    name = "print_versioned_types",
+    main = "//bzl/ppx:Driver",
+    opts = PPX_EXEC_OPTS,
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort (buildifier)
+        "@opam//pkg:ppx_bin_prot",
+        "@opam//pkg:lens.ppx_deriving",
+        "@opam//pkg:ppx_deriving",
+        "@opam//pkg:ppx_deriving.std",
+        "@opam//pkg:ppx_sexp_conv",
+        "@opam//pkg:ppx_compare",
+        "@opam//pkg:ppx_enumerate",
+        "@opam//pkg:ppx_fields_conv",
+        "@opam//pkg:ppx_hash",
+        "@opam//pkg:ppx_deriving_yojson",
+        ":print_versioned_types.cm_",
+    ],
+)
+
+ocaml_module(
+    name = "print_versioned_types.cm_",
+    src = "print_versioned_types.ml",
+    opts = IMPL_OPTS,
+    ppx = "//bzl/ppx:ppx.exe[ppxlib.metaquot]",
+    ppx_args = [
+        # do not sort (buildifier)
+        "-cookie",
+        "library-name=\"ppx_version\"",
+        "-corrected-suffix",
+        ".ppx-corrected",
+    ],
+    deps = ["//src:ppx_version"]
+)
+
+################################################################
+ppx_executable(
+    name = "print_binable_functors",
+    main = "//bzl/ppx:Driver",
+    opts = PPX_EXEC_OPTS,
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort (buildifier)
+        "@opam//pkg:ppx_bin_prot",
+        "@opam//pkg:lens.ppx_deriving",
+        "@opam//pkg:ppx_deriving",
+        "@opam//pkg:ppx_deriving.std",
+        "@opam//pkg:ppx_sexp_conv",
+        "@opam//pkg:ppx_compare",
+        "@opam//pkg:ppx_enumerate",
+        "@opam//pkg:ppx_fields_conv",
+        "@opam//pkg:ppx_hash",
+        "@opam//pkg:ppx_deriving_yojson",
+        ":print_binable_functors.cm_",
+    ],
+)
+
+ocaml_module(
+    name = "print_binable_functors.cm_",
+    src  = "print_binable_functors.ml",
+    opts = IMPL_OPTS + ["-verbose", "-predicates", "ppx_driver,ppx_deriver"],
+    ppx = "//bzl/ppx:ppx.exe[ppxlib.metaquot]",
+    ppx_args = [
+        # do not sort (buildifier)
+        "-cookie",
+        "library-name=\"ppx_version\"",
+        "-corrected-suffix",
+        ".ppx-corrected",
+    ],
+    deps = [
+        # do not sort (buildifier)
+        "@opam//pkg:ppx_bin_prot",
+        "@opam//pkg:lens.ppx_deriving",
+        "@opam//pkg:ppx_deriving.std",
+        "@opam//pkg:ppx_sexp_conv",
+        "@opam//pkg:ppx_compare",
+        "@opam//pkg:ppx_enumerate",
+        "@opam//pkg:ppx_fields_conv",
+        "@opam//pkg:ppx_hash",
+        "@opam//pkg:ppx_deriving_yojson",
+        "//src:ppx_version",
+    ],
+)

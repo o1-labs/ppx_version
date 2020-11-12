@@ -159,3 +159,17 @@ The relevant functors are:
  - `Binable.Of_sexpable`
  - `Binable.Of_stringable`
  - `Bin_prot.Utils.Make_binable`
+
+## building
+
+### Bazel
+
+See [docs/BAZEL.md](docs/BAZEL.md)
+
+### Legacy
+
+First remove Bazel leftovers: `$ bazel clean`.
+
+To build ppx_version.cmxa: `$ dune build src/ppx_version.cmxa`.  Result will be in `_build`.
+
+Tests: `$ cd test && make`

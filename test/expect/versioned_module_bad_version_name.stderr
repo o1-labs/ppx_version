@@ -1,0 +1,10 @@
+Raised at file "parsing/location.ml", line 514, characters 16-61
+Called from file "bazel-out/host/bin/src/_obazl_/Ppx_version__Versioned_module.ml", line 1764, characters 2-43
+Called from file "bazel-out/host/bin/src/_obazl_/Ppx_version__Versioned_module.ml", line 1831, characters 20-68
+Called from file "list.ml", line 117, characters 24-34
+Called from file "src/list0.ml" (inlined), line 22, characters 40-81
+Called from file "bazel-out/host/bin/src/_obazl_/Ppx_version__Versioned_module.ml", line 1823, characters 4-1023
+Called from file "bazel-out/host/bin/src/_obazl_/Ppx_version__Versioned_module.ml", line 2589, characters 7-69
+
+File "test/versioned_module_bad_version_name.ml", line 6, characters 11-14:
+Error: Versioning module containing versioned type must be named Vn, for some number n
