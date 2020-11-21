@@ -90,13 +90,32 @@ module Printing = struct
     let open E in
     ({txt="deriving";loc},PStr [%str bin_io])
 
+  (* remove internal attributes, on core type in manifest and in records or variants in kind *)
+  let type_decl_remove_internal_attributes type_decl =
+    let removed_in_kind =
+      match type_decl.ptype_kind with
+      | Ptype_variant ctors ->
+        Ptype_variant (List.map ctors ~f:(fun ctor ->
+            {ctor with pcd_attributes = []}))
+      | Ptype_record labels ->
+        Ptype_record (List.map labels ~f:(fun label ->
+            {label with pld_attributes = []}))
+      | kind -> kind
+    in
+    let removed_in_manifest =
+      Option.map type_decl.ptype_manifest ~f:(fun core_type ->
+          { core_type with ptyp_attributes = []})
+    in
+    {type_decl with ptype_manifest = removed_in_manifest; ptype_kind = removed_in_kind }
+
   (* filter attributes from types, except for bin_io, don't care about changes to others *)
   let filter_type_decls_attrs type_decl =
-    (* retain `deriving bin_io` *)
+    (* retain only `deriving bin_io` in deriving list *)
     let ptype_attributes =
       if contains_deriving_bin_io type_decl.ptype_attributes then [just_bin_io] else []
     in
-    {type_decl with ptype_attributes}
+    let type_decl_no_attrs = type_decl_remove_internal_attributes type_decl in
+    {type_decl_no_attrs with ptype_attributes}
 
   (* convert type_decls to structure item so we can print it *)
   let type_decls_to_stri type_decls =
