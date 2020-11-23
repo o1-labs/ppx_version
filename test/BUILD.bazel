@@ -7,28 +7,6 @@ load(
     "ppx_test",
 )
 
-# COMMON_OPTS = select({
-#     "//bzl/config:enable_verbose": ["-verbose"],
-#     "//conditions:default": [],
-# }) + []
-
-# LINK_OPTS = select({
-#     "//bzl/config:enable_always_link": ["-linkall"],
-#     "//conditions:default": [],
-# }) + []
-
-# IMPL_OPTS = COMMON_OPTS + LINK_OPTS + []
-# INTF_OPTS = COMMON_OPTS + LINK_OPTS + []
-
-PPX_COOKIES = {"-cookie": "ppx_version"}
-PPX_ARGS = [
-    # do not sort (buildifier)
-    "-corrected-suffix",
-    ".ppx-corrected",
-]
-
-PPX_OUTPUT_FORMAT = "text"
-
 ################################################################
 test_suite(
     name = "test",
@@ -111,8 +89,6 @@ ppx_test(
     src     = "versioned_sig_good.mli",
     expect  = {"expect/versioned_sig_good.mli": "stdout"},
     ppx     = ":ppx",
-    cookies = PPX_COOKIES,
-    args    = PPX_ARGS,
     timeout = "short"
 )
 
@@ -121,8 +97,6 @@ ppx_test(
     src     = "versioned_sig_good.ml",
     expect  = {"expect/versioned_sig_good.ml": "stdout"},
     ppx     = ":ppx",
-    cookies = PPX_COOKIES,
-    args    = PPX_ARGS,
     timeout = "short"
 )
 
@@ -164,8 +138,6 @@ ppx_test(
     src     = "versioned_bad_module_name.ml",
     ppx     = ":ppx",
     expect  = {"expect/versioned_bad_module_name.stderr": "stderr"},
-    cookies = PPX_COOKIES,
-    args    = PPX_ARGS,
     deps    = ["@opam//pkg:core_kernel"],
     timeout = "short"
 )
@@ -184,8 +156,6 @@ ppx_test(
     src     = "versioned_bad_version_name.ml",
     ppx     = ":ppx",
     expect  = {"expect/versioned_bad_version_name.stderr": "stderr"},
-    cookies = PPX_COOKIES,
-    args    = PPX_ARGS,
     deps    = ["@opam//pkg:core_kernel"],
     timeout = "short"
 )
@@ -195,8 +165,6 @@ ppx_test(
     src     = "versioned_bad_wrapped_module_structure.ml",
     ppx     = ":ppx",
     expect  = {"expect/versioned_bad_wrapped_module_structure.stderr": "stderr"},
-    cookies = PPX_COOKIES,
-    args    = PPX_ARGS,
     deps    = ["@opam//pkg:core_kernel"],
     timeout = "short"
 )
@@ -206,8 +174,6 @@ ppx_test(
     src     = "versioned_bad_type_name.ml",
     expect  = {"expect/versioned_bad_type_name.stderr": "stderr"},
     ppx     = ":ppx",
-    cookies = PPX_COOKIES,
-    args    = PPX_ARGS,
     deps    = ["@opam//pkg:core_kernel"],
     timeout = "short"
 )
@@ -217,8 +183,6 @@ ppx_test(
     src     = "versioned_bad_unnumbered.ml",
     ppx     = ":ppx",
     expect  = {"expect/versioned_bad_unnumbered.stderr": "stderr"},
-    cookies = PPX_COOKIES,
-    args    = PPX_ARGS,
     deps    = ["@opam//pkg:core_kernel"],
     timeout = "short"
 )
@@ -228,8 +192,6 @@ ppx_test(
     src     = "versioned_bad_option.ml",
     ppx     = ":ppx",
     expect  = {"expect/versioned_bad_option.stderr": "stderr"},
-    cookies = PPX_COOKIES,
-    args    = PPX_ARGS,
     deps    = ["@opam//pkg:core_kernel"],
     timeout = "short"
 )
@@ -248,8 +210,6 @@ ppx_test(
     src     = "versioned_bad_arrow_type.ml",
     ppx     = ":ppx",
     expect  = {"expect/versioned_bad_arrow_type.stderr": "stderr"},
-    cookies = PPX_COOKIES,
-    args    = PPX_ARGS,
     timeout = "short"
 )
 
@@ -258,8 +218,6 @@ ppx_test(
     src     = "versioned_module_bad_stable_name.ml",
     expect  = {"expect/versioned_module_bad_stable_name.stderr": "stderr"},
     ppx     = ":ppx",
-    cookies = PPX_COOKIES,
-    args    = PPX_ARGS,
     timeout = "short"
 )
 
@@ -268,8 +226,6 @@ ppx_test(
     src     = "versioned_module_bad_version_name.ml",
     expect  = {"expect/versioned_module_bad_version_name.stderr": "stderr"},
     ppx     = ":ppx",
-    cookies = PPX_COOKIES,
-    args    = PPX_ARGS,
     deps    = ["@opam//pkg:core_kernel"],
     timeout = "short"
 )
@@ -279,8 +235,6 @@ ppx_test(
     src     = "versioned_module_bad_missing_type.ml",
     expect  = {"expect/versioned_module_bad_missing_type.stderr": "stderr"},
     ppx     = ":ppx",
-    cookies = PPX_COOKIES,
-    args    = PPX_ARGS,
     deps    = ["@opam//pkg:core_kernel"],
     timeout = "short"
 )
@@ -290,8 +244,6 @@ ppx_test(
     src     = "versioned_module_bad_version_order.ml",
     expect  = {"expect/versioned_module_bad_version_order.stderr": "stderr"},
     ppx     = ":ppx",
-    cookies = PPX_COOKIES,
-    args    = PPX_ARGS,
     deps    = ["@opam//pkg:core_kernel"],
     timeout = "short"
 )
@@ -305,17 +257,10 @@ ppx_test(
     timeout = "short"
 )
 
-################################################################
+###############
 ppx_executable(
     name = "ppx",
     main = "//bzl/ppx:Driver",
-    opts = select({
-        "//:enable_verbose": ["-verbose"],
-        "//conditions:default": ["-thread"],
-    }) + [
-        "-linkall",
-        "-predicates", "ppx_driver,ppx_deriver",
-    ],
     deps = [
         "@opam//pkg:core_kernel",
         "@opam//pkg:ppxlib",
@@ -324,6 +269,5 @@ ppx_executable(
         "//src:ppx_version"
     ],
     lazy_deps = ["@opam//pkg:ppx_deriving_yojson.runtime"],
-                 # "//src/runtime:ppx_version.runtime"],
     visibility = ["//visibility:public"],
 )

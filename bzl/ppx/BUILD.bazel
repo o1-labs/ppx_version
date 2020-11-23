@@ -1,25 +1,16 @@
-## ppx_pkg_header.mustache
-"## OBAZL GENERATED FILE ## To retain edits (prevent overwrite), delete this line."
+load("@obazl_rules_ocaml//ocaml:rules.bzl", "ppx_executable", "ppx_module")
 
-load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
-load("@obazl_rules_ocaml//ocaml:rules.bzl", "ppx_module", "ppx_executable")
-load("//:BUILD.bzl", "REPO_PPX_EXECUTABLE_OPTS")
-load(":BUILD.bzl", "PKG_PPX_EXECUTABLE_OPTS")
-
-THIS_EXECUTABLE_OPTS = REPO_PPX_EXECUTABLE_OPTS + PKG_PPX_EXECUTABLE_OPTS
-
-## ppx_executable.mustache
 ###############
 ppx_executable(
-    name = "ppx.exe[ppxlib.metaquot]",
+    name = "ppxlib.metaquot",
     main = ":Driver",
-    opts = THIS_EXECUTABLE_OPTS,
+    opts = [],
     visibility = [
         "//src:__pkg__",
         "//tools:__pkg__",
     ],
     deps = [
-        # do not sort (buildifier)
+        "@opam//pkg:ppxlib",
         "@opam//pkg:ppxlib.metaquot",
     ],
 )
@@ -29,69 +20,16 @@ ppx_module(
     name = "Driver",
     src = ":ppxlib_driver.ml",
     opts = ["-linkall"],
+    visibility = ["//visibility:public"],
     deps = ["@opam//pkg:ppxlib"],
-    visibility = ["//visibility:public"]
 )
 
 ########
 genrule(
-    name = "gensrc",
+    name = "gendriver",
     outs = ["ppxlib_driver.ml"],
     cmd = "\n".join([
         "echo \"(* GENERATED FILE - DO NOT EDIT *)\" > \"$@\"",
         "echo \"let () = Ppxlib.Driver.standalone ()\" >> \"$@\"",
     ]),
-    # visibility = ["//visibility:public"],
-)
-
-###################################################################
-################ Configuration Settings ###########################
-bool_flag(
-    name = "always-link",
-    build_setting_default = False,
-)
-
-config_setting(
-    name = "enable_always_link",
-    flag_values = {":always-link": str(True)},
-)
-
-bool_flag(
-    name = "debug",
-    build_setting_default = True,
-)
-
-config_setting(
-    name = "enable_debug",
-    flag_values = {":debug": str(True)},
-)
-
-bool_flag(
-    name = "threads",
-    build_setting_default = True,
-)
-
-config_setting(
-    name = "enable_threads",
-    flag_values = {":threads": str(True)},
-)
-
-bool_flag(
-    name = "tooling",
-    build_setting_default = False,
-)
-
-config_setting(
-    name = "enable_tooling",
-    flag_values = {":tooling": str(True)},
-)
-
-bool_flag(
-    name = "verbose",
-    build_setting_default = False,
-)
-
-config_setting(
-    name = "enable_verbose",
-    flag_values = {":verbose": str(True)},
 )

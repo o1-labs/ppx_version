@@ -1,35 +1,16 @@
-## master_pkg.mustache
 ## OBAZL GENERATED FILE ## To retain edits (prevent overwrite), delete this line.
 
 load(
     "@obazl_rules_ocaml//ocaml:rules.bzl",
-    "ocaml_ns",
     "ppx_archive",
     "ppx_module",
-)
-load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
-load(
-    "//:BUILD.bzl",
-    "REPO_NS_MODULE_OPTS",
-    "REPO_PPX_ARCHIVE_OPTS",
-    "REPO_PPX_MODULE_OPTS",
-)
-load(
-    ":BUILD.bzl",
-    "PKG_NS_MODULE_OPTS",
-    "PKG_PPX_ARCHIVE_OPTS",
-    "PKG_PPX_MODULE_OPTS",
+    "ppx_ns",
 )
 
-## stanza_library_ppx.mustache
 ################################################################
-## STANZA 1: PPX_VERSION
+## PPX STANZA 1: PPX_VERSION
 ################################################################
-PPX_VERSION_PPX_MODULE_OPTS = REPO_PPX_MODULE_OPTS + PKG_PPX_MODULE_OPTS + ["-linkall", "-opaque"]
-
-PPX_VERSION_PPX_ARCHIVE_OPTS = REPO_PPX_ARCHIVE_OPTS + PKG_PPX_ARCHIVE_OPTS + ["-linkall", "-opaque"]
-
-PPX_VERSION_NS_MODULE_OPTS = REPO_NS_MODULE_OPTS + PKG_NS_MODULE_OPTS + ["-linkall", "-opaque"]
+PPX_VERSION_PPX_MODULE_OPTS = []
 
 PPX_VERSION_DEPS = [
     # do not sort (buildifier)
@@ -39,38 +20,34 @@ PPX_VERSION_DEPS = [
     "@opam//pkg:core_kernel",
 ]
 
-PPX_VERSION_PPX = "//bzl/ppx:ppx.exe[ppxlib.metaquot]"
+PPX_VERSION_PPX = "//bzl/ppx:ppxlib.metaquot"
 
 PPX_VERSION_PPX_ARGS = [
     # do not sort (buildifier)
 ]
 
-## ppx_archive.mustache
 ############
 ppx_archive(
     name = "ppx_version",
-    opts = PPX_VERSION_PPX_ARCHIVE_OPTS,
+    opts = [],
     visibility = ["//visibility:public"],
     deps = PPX_VERSION_DEPS + [
         # do not sort (buildifier)
+        ":Ppx_version_ns",
         ":Bin_io_unversioned",
         ":Dummy_derivers",
         ":Lint_version_syntax",
+        ":Versioned_type",
         ":Versioned_module",
         ":Versioned_util",
-        ":Versioned_type",
     ],
-    lazy_deps = [
-        "//src/runtime:ppx_version_runtime",
-    ]
 )
 
-## ocaml_ns.mustache
-################
-ocaml_ns(
+#########
+ppx_ns(
     name = "Ppx_version_ns",
     ns = "ppx_version",
-    opts = PPX_VERSION_NS_MODULE_OPTS,
+    opts = [],
     submodules = [
         # do not sort (buildifier)
         "bin_io_unversioned.ml",
@@ -82,7 +59,6 @@ ocaml_ns(
     ],
 )
 
-## ppx_module.mustache
 ###########
 ppx_module(
     name = "Bin_io_unversioned",
@@ -91,7 +67,7 @@ ppx_module(
         # do not sort (buildifier)
         "@ppx_version//src/runtime:ppx_version_runtime",
     ],
-    ns        = ":Ppx_version_ns",
+    ns = ":Ppx_version_ns",
     opts = PPX_VERSION_PPX_MODULE_OPTS,
     ppx = PPX_VERSION_PPX,
     ppx_args = PPX_VERSION_PPX_ARGS,
@@ -105,7 +81,6 @@ ppx_module(
     ],
 )
 
-## ppx_module.mustache
 ###########
 ppx_module(
     name = "Dummy_derivers",
@@ -114,7 +89,7 @@ ppx_module(
         # do not sort (buildifier)
         "@ppx_version//src/runtime:ppx_version_runtime",
     ],
-    ns        = ":Ppx_version_ns",
+    ns = ":Ppx_version_ns",
     opts = PPX_VERSION_PPX_MODULE_OPTS,
     ppx = PPX_VERSION_PPX,
     ppx_args = PPX_VERSION_PPX_ARGS,
@@ -127,7 +102,6 @@ ppx_module(
     ],
 )
 
-## ppx_module.mustache
 ###########
 ppx_module(
     name = "Lint_version_syntax",
@@ -136,7 +110,7 @@ ppx_module(
         # do not sort (buildifier)
         "@ppx_version//src/runtime:ppx_version_runtime",
     ],
-    ns        = ":Ppx_version_ns",
+    ns = ":Ppx_version_ns",
     opts = PPX_VERSION_PPX_MODULE_OPTS,
     ppx = PPX_VERSION_PPX,
     ppx_args = PPX_VERSION_PPX_ARGS,
@@ -150,7 +124,6 @@ ppx_module(
     ],
 )
 
-## ppx_module.mustache
 ###########
 ppx_module(
     name = "Versioned_module",
@@ -159,7 +132,7 @@ ppx_module(
         # do not sort (buildifier)
         "@ppx_version//src/runtime:ppx_version_runtime",
     ],
-    ns        = ":Ppx_version_ns",
+    ns = ":Ppx_version_ns",
     opts = PPX_VERSION_PPX_MODULE_OPTS,
     ppx = PPX_VERSION_PPX,
     ppx_args = PPX_VERSION_PPX_ARGS,
@@ -173,7 +146,6 @@ ppx_module(
     ],
 )
 
-## ppx_module.mustache
 ###########
 ppx_module(
     name = "Versioned_type",
@@ -182,7 +154,7 @@ ppx_module(
         # do not sort (buildifier)
         "@ppx_version//src/runtime:ppx_version_runtime",
     ],
-    ns        = ":Ppx_version_ns",
+    ns = ":Ppx_version_ns",
     opts = PPX_VERSION_PPX_MODULE_OPTS,
     ppx = PPX_VERSION_PPX,
     ppx_args = PPX_VERSION_PPX_ARGS,
@@ -192,21 +164,16 @@ ppx_module(
         "@opam//pkg:ppxlib",
         "@opam//pkg:ppx_bin_prot",
         "@opam//pkg:core_kernel",
-        "Versioned_module",
         "Versioned_util",
     ],
 )
 
-## ppx_module.mustache
 ###########
 ppx_module(
     name = "Versioned_util",
     src = "versioned_util.ml",
-    lazy_deps = [
-        # do not sort (buildifier)
-        "@ppx_version//src/runtime:ppx_version_runtime",
-    ],
-    ns        = ":Ppx_version_ns",
+    lazy_deps = ["@ppx_version//src/runtime:ppx_version_runtime"],
+    ns = ":Ppx_version_ns",
     opts = PPX_VERSION_PPX_MODULE_OPTS,
     ppx = PPX_VERSION_PPX,
     ppx_args = PPX_VERSION_PPX_ARGS,
@@ -217,26 +184,4 @@ ppx_module(
         "@opam//pkg:ppx_bin_prot",
         "@opam//pkg:core_kernel",
     ],
-)
-
-###################################################################
-################ Configuration Settings ###########################
-bool_flag(
-    name = "debug",
-    build_setting_default = True,
-)
-
-config_setting(
-    name = "enable_debug",
-    flag_values = {":debug": str(True)},
-)
-
-bool_flag(
-    name = "verbose",
-    build_setting_default = False,
-)
-
-config_setting(
-    name = "enable_verbose",
-    flag_values = {":verbose": str(True)},
 )

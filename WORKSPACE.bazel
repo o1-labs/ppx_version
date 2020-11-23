@@ -15,13 +15,26 @@ http_archive(
 load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
 bazel_skylib_workspace()
 
-###############
+############### Bootstrap OPAM Rules ###############
+git_repository(
+    name = "obazl_rules_opam",
+    remote = "https://github.com/obazl/rules_opam",
+    branch = "dev",
+)
+load("@obazl_rules_opam//opam:bootstrap.bzl", "opam_configure")
+load("//bzl:opam.bzl", "opam") # opam pkg list
+opam_configure(opam = opam)
+
+############### Bootstrap OCaml Rules ###############
 git_repository(
     name = "obazl_rules_ocaml",
     remote = "https://github.com/obazl/rules_ocaml",
-    branch = "master",
+    branch = "dev",
+    # commit = "feef897197b36b14b65ffdf00b9badcbdb8f42f4",
+    # shallow_since = "1593623637 -0500"
 )
 
 load("@obazl_rules_ocaml//ocaml:bootstrap.bzl", "ocaml_configure")
-
 ocaml_configure()
+
+
