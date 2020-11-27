@@ -1,5 +1,3 @@
-## OBAZL GENERATED FILE ## To retain edits (prevent overwrite), delete this line.
-
 load(
     "@obazl_rules_ocaml//ocaml:rules.bzl",
     "ppx_archive",

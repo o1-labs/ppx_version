@@ -19,7 +19,7 @@ bazel_skylib_workspace()
 git_repository(
     name = "obazl_rules_opam",
     remote = "https://github.com/obazl/rules_opam",
-    branch = "master",
+    branch = "main",
 )
 load("@obazl_rules_opam//opam:bootstrap.bzl", "opam_configure")
 load("//bzl:opam.bzl", "opam") # opam pkg list
@@ -29,7 +29,7 @@ opam_configure(opam = opam)
 git_repository(
     name = "obazl_rules_ocaml",
     remote = "https://github.com/obazl/rules_ocaml",
-    branch = "master",
+    branch = "main",
     # commit = "feef897197b36b14b65ffdf00b9badcbdb8f42f4",
     # shallow_since = "1593623637 -0500"
 )

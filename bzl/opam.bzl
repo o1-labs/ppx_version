@@ -1,7 +1,5 @@
 opam = struct(
     opam_version = "2.0",
-    pins = {
-    },
     packages = {
         "core_kernel": "v0.12.3",
         "ocaml-compiler-libs": "v0.11.0",
