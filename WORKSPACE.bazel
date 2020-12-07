@@ -23,7 +23,7 @@ git_repository(
 )
 load("@obazl_rules_opam//opam:bootstrap.bzl", "opam_configure")
 load("//bzl:opam.bzl", "opam") # opam pkg list
-opam_configure(opam = opam)
+opam_configure(opam = opam, switch = "mina-0.1.0")
 
 ############### Bootstrap OCaml Rules ###############
 git_repository(
