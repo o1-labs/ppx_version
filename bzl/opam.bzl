@@ -17,7 +17,7 @@ PACKAGES = {
 }
 
 opam = struct(
-    opam_version = "2.0",
+    version = "2.0",
     switches  = {
         "mina-0.1.0": struct(   # first entry is default
             compiler = "4.07.1",
