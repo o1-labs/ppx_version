@@ -1,4 +1,4 @@
 {
  :workspace "ppx_version"
- :ppx {:shared-pkg "//bzl/ppx"}
+ :ppx {:shared-pkg "//bzl/ppx/exe"}
  }
