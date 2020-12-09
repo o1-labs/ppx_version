@@ -1,114 +1,103 @@
+## OBAZL GENERATED FILE ## To retain edits (prevent overwrite), delete this line.
+
 load(
     "@obazl_rules_ocaml//ocaml:rules.bzl",
+    "ocaml_executable",
     "ocaml_module",
-    "ppx_executable",
 )
 
-COMMON_OPTS = select({
-    "//:enable_verbose": ["-verbose"],
-    "//conditions:default": [],
-}) + []
+################################################################
+## STANZA 1: EXECUTABLE PRINT_VERSIONED_TYPES
+################################################################
+PRINT_VERSIONED_TYPES_EXECUTABLE_OPTS = []
 
-LINK_OPTS = ["-linkall"]
-# LINK_OPTS = select({
-#     "//:enable_always_link": ["-linkall"],
-#     "//conditions:default": [],
-# })
+PRINT_VERSIONED_TYPES_MODULE_OPTS = []
 
-EXEC_OPTS = COMMON_OPTS + LINK_OPTS
-IMPL_OPTS = COMMON_OPTS + LINK_OPTS
-PPX_EXEC_OPTS = COMMON_OPTS + LINK_OPTS + ["-predicates", "ppx_deriver"]
-
-PPX_ARGS = [
+PRINT_VERSIONED_TYPES_DEPS = [
     # do not sort (buildifier)
-    "-cookie",
-    "library-name=\"ppx_version\"",
-    "-corrected-suffix",
-    ".ppx-corrected",
+    "@opam//pkg:ppx_bin_prot",
+    "@opam//pkg:lens.ppx_deriving",
+    "@opam//pkg:ppx_deriving.std",
+    "@opam//pkg:ppx_sexp_conv",
+    "@opam//pkg:ppx_compare",
+    "@opam//pkg:ppx_enumerate",
+    "@opam//pkg:ppx_fields_conv",
+    "@opam//pkg:ppx_hash",
+    "@opam//pkg:ppx_deriving_yojson",
+    "@ppx_version//src:ppx_version",
 ]
 
-################################################################
-ppx_executable(
-    name = "print_versioned_types",
-    main = "//bzl/ppx:Driver",
-    opts = PPX_EXEC_OPTS,
+PRINT_VERSIONED_TYPES_PPX = "@//bzl/ppx/exe:ppxlib.metaquot"
+
+PRINT_VERSIONED_TYPES_PPX_ARGS = [
+    # do not sort (buildifier)
+]
+
+#################
+ocaml_executable(
+    name = "print_versioned_types.exe",
+    opts = PRINT_VERSIONED_TYPES_EXECUTABLE_OPTS,
     visibility = ["//visibility:public"],
-    deps = [
+    deps = PRINT_VERSIONED_TYPES_DEPS + [
         # do not sort (buildifier)
-        "@opam//pkg:ppx_bin_prot",
-        "@opam//pkg:lens.ppx_deriving",
-        "@opam//pkg:ppx_deriving",
-        "@opam//pkg:ppx_deriving.std",
-        "@opam//pkg:ppx_sexp_conv",
-        "@opam//pkg:ppx_compare",
-        "@opam//pkg:ppx_enumerate",
-        "@opam//pkg:ppx_fields_conv",
-        "@opam//pkg:ppx_hash",
-        "@opam//pkg:ppx_deriving_yojson",
-        ":print_versioned_types.cm_",
+        ":_Print_versioned_types",
     ],
 )
 
+#############
 ocaml_module(
-    name = "print_versioned_types.cm_",
+    name = "_Print_versioned_types",
     src = "print_versioned_types.ml",
-    opts = IMPL_OPTS,
-    ppx = "//bzl/ppx:ppx.exe[ppxlib.metaquot]",
-    ppx_args = [
-        # do not sort (buildifier)
-        "-cookie",
-        "library-name=\"ppx_version\"",
-        "-corrected-suffix",
-        ".ppx-corrected",
-    ],
-    deps = ["//src:ppx_version"]
+    opts = PRINT_VERSIONED_TYPES_MODULE_OPTS,
+    ppx = PRINT_VERSIONED_TYPES_PPX,
+    ppx_args = PRINT_VERSIONED_TYPES_PPX_ARGS,
+    deps = PRINT_VERSIONED_TYPES_DEPS,
 )
 
 ################################################################
-ppx_executable(
-    name = "print_binable_functors",
-    main = "//bzl/ppx:Driver",
-    opts = PPX_EXEC_OPTS,
+## STANZA 2: EXECUTABLE PRINT_BINABLE_FUNCTORS
+################################################################
+PRINT_BINABLE_FUNCTORS_EXECUTABLE_OPTS = []
+
+PRINT_BINABLE_FUNCTORS_MODULE_OPTS = []
+
+PRINT_BINABLE_FUNCTORS_DEPS = [
+    # do not sort (buildifier)
+    "@opam//pkg:ppx_bin_prot",
+    "@opam//pkg:lens.ppx_deriving",
+    "@opam//pkg:ppx_deriving.std",
+    "@opam//pkg:ppx_sexp_conv",
+    "@opam//pkg:ppx_compare",
+    "@opam//pkg:ppx_enumerate",
+    "@opam//pkg:ppx_fields_conv",
+    "@opam//pkg:ppx_hash",
+    "@opam//pkg:ppx_deriving_yojson",
+    "@ppx_version//src:ppx_version",
+]
+
+PRINT_BINABLE_FUNCTORS_PPX = "@//bzl/ppx/exe:ppxlib.metaquot"
+
+PRINT_BINABLE_FUNCTORS_PPX_ARGS = [
+    # do not sort (buildifier)
+]
+
+#################
+ocaml_executable(
+    name = "print_binable_functors.exe",
+    opts = PRINT_BINABLE_FUNCTORS_EXECUTABLE_OPTS,
     visibility = ["//visibility:public"],
-    deps = [
+    deps = PRINT_BINABLE_FUNCTORS_DEPS + [
         # do not sort (buildifier)
-        "@opam//pkg:ppx_bin_prot",
-        "@opam//pkg:lens.ppx_deriving",
-        "@opam//pkg:ppx_deriving",
-        "@opam//pkg:ppx_deriving.std",
-        "@opam//pkg:ppx_sexp_conv",
-        "@opam//pkg:ppx_compare",
-        "@opam//pkg:ppx_enumerate",
-        "@opam//pkg:ppx_fields_conv",
-        "@opam//pkg:ppx_hash",
-        "@opam//pkg:ppx_deriving_yojson",
-        ":print_binable_functors.cm_",
+        ":_Print_binable_functors",
     ],
 )
 
+#############
 ocaml_module(
-    name = "print_binable_functors.cm_",
-    src  = "print_binable_functors.ml",
-    opts = IMPL_OPTS + ["-verbose", "-predicates", "ppx_driver,ppx_deriver"],
-    ppx = "//bzl/ppx:ppx.exe[ppxlib.metaquot]",
-    ppx_args = [
-        # do not sort (buildifier)
-        "-cookie",
-        "library-name=\"ppx_version\"",
-        "-corrected-suffix",
-        ".ppx-corrected",
-    ],
-    deps = [
-        # do not sort (buildifier)
-        "@opam//pkg:ppx_bin_prot",
-        "@opam//pkg:lens.ppx_deriving",
-        "@opam//pkg:ppx_deriving.std",
-        "@opam//pkg:ppx_sexp_conv",
-        "@opam//pkg:ppx_compare",
-        "@opam//pkg:ppx_enumerate",
-        "@opam//pkg:ppx_fields_conv",
-        "@opam//pkg:ppx_hash",
-        "@opam//pkg:ppx_deriving_yojson",
-        "//src:ppx_version",
-    ],
+    name = "_Print_binable_functors",
+    src = "print_binable_functors.ml",
+    opts = PRINT_BINABLE_FUNCTORS_MODULE_OPTS,
+    ppx = PRINT_BINABLE_FUNCTORS_PPX,
+    ppx_args = PRINT_BINABLE_FUNCTORS_PPX_ARGS,
+    deps = PRINT_BINABLE_FUNCTORS_DEPS,
 )

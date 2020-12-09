@@ -260,7 +260,7 @@ ppx_test(
 ###############
 ppx_executable(
     name = "ppx",
-    main = "//bzl/ppx:Driver",
+    main = "//bzl/ppx/exe:Driver",
     deps = [
         "@opam//pkg:core_kernel",
         "@opam//pkg:ppxlib",

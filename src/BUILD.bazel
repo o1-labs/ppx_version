@@ -18,11 +18,9 @@ PPX_VERSION_DEPS = [
     "@opam//pkg:core_kernel",
 ]
 
-PPX_VERSION_PPX = "//bzl/ppx:ppxlib.metaquot"
+PPX_VERSION_PPX = "//bzl/ppx/exe:ppxlib.metaquot"
 
-PPX_VERSION_PPX_ARGS = [
-    # do not sort (buildifier)
-]
+PPX_VERSION_PPX_ARGS = []
 
 ############
 ppx_archive(
