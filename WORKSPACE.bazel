@@ -15,6 +15,13 @@ http_archive(
 load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
 bazel_skylib_workspace()
 
+###############
+git_repository(
+    name = "obazl_tools_bazel",
+    remote = "https://github.com/obazl/tools_bazel",
+    branch = "main",
+)
+
 OPAM_SWITCH = "mina-0.1.0"
 
 ############### Bootstrap OPAM Rules ###############
