@@ -14,14 +14,14 @@ build --color=yes
 # build --@ocaml//mode=native           # set compilation mode for ocaml_* rules , bytecode (default) or native
 # build --@ppx//verbose                 # enable verbose for all ppx_* rules
 # build --@ppx//mode=native             # set compilation mode for ppx_* rules, bytecode (default) or native
-# build --//:ppx-print="text            # all ppx processing emits text instead of binary ast (-dump-ast)
+# build --@ppx//print:text              # all ppx processing emits text instead of binary ast (-dump-ast)
 
 ################################################################
+## enable both of these to set the macos version
 # build:macos --macos_minimum_os='10.15'
 # build --config=macos
 
-## DO NOT USE on MacOS:
+## Use with caution; symlinks may confuse Bazel in some situations
 # build --symlink_prefix=.bazel/   # use hidden dir instead of top-level symlinks
-## DO NOT USE on MacOS:
 # build --experimental_no_product_name_out_symlink # do not create `bazel-out` symlink
 
