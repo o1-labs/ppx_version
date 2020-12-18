@@ -1,9 +1,8 @@
-Raised at file "parsing/location.ml", line 514, characters 16-61
-Called from file "bazel-out/host/bin/src/_obazl_/Ppx_version__Versioned_module.ml", line 1780, characters 10-107
+Raised at file "parsing/location.ml", line 514, characters 22-61
+Called from unknown location
 Called from file "bazel-out/host/bin/src/_obazl_/Ppx_version__Versioned_module.ml", line 1831, characters 20-68
 Called from file "list.ml", line 117, characters 24-34
-Called from file "src/list0.ml" (inlined), line 22, characters 40-81
-Called from file "bazel-out/host/bin/src/_obazl_/Ppx_version__Versioned_module.ml", line 1823, characters 4-1023
+Called from file "bazel-out/host/bin/src/_obazl_/Ppx_version__Versioned_module.ml", line 1823, characters 4-1216
 Called from file "bazel-out/host/bin/src/_obazl_/Ppx_version__Versioned_module.ml", line 2589, characters 7-69
 
 File "test/versioned_module_bad_missing_type.ml", line 6, characters 16-26:
