@@ -21,22 +21,14 @@ git_repository(
     remote = "https://github.com/obazl/tools_bazel",
     branch = "main",
 )
-git_repository(
-    name = "obazl_rules_opam",
-    remote = "https://github.com/obazl/rules_opam",
-    branch = "main",
-)
+
 git_repository(
     name = "obazl_rules_ocaml",
     remote = "https://github.com/obazl/rules_ocaml",
-    branch = "main",
+    # tag    = "v0.1.0-beta.1"
+    branch = "dev",
 )
+load("@obazl_rules_ocaml//ocaml:bootstrap.bzl", "ocaml_configure")
 
-load("@obazl_rules_opam//opam:bootstrap.bzl", opam_configure = "configure")
-load("//bzl:opam.bzl", "opam")
-switch = opam_configure(opam = opam)
-
-load("@obazl_rules_ocaml//ocaml:bootstrap.bzl", ocaml_configure = "configure")
-ocaml_configure( switch = switch)
-
-
+load("//:WORKSPACE.bzl", opam = "opam")
+ocaml_configure(opam=opam, build = "mina-0.1.0")

@@ -1,5 +1,3 @@
-let () =
-  Ppx_module_timer_runtime.record_start Ppx_module_timer_runtime.__MODULE__
 open Core_kernel
 module type Some_intf  =
   sig
@@ -5331,5 +5329,3 @@ module M13 =
         type t = Stable.Latest.t
       end
   end
-let () =
-  Ppx_module_timer_runtime.record_until Ppx_module_timer_runtime.__MODULE__

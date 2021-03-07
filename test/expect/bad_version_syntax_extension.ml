@@ -1,5 +1,3 @@
-let () =
-  Ppx_module_timer_runtime.record_start Ppx_module_timer_runtime.__MODULE__
 open Core_kernel
 [%%not_a_test_module
   let "bad bin_io only" = (module
@@ -37,5 +35,3 @@ open Core_kernel
         }
       let _ = bin_t
     end)]
-let () =
-  Ppx_module_timer_runtime.record_until Ppx_module_timer_runtime.__MODULE__

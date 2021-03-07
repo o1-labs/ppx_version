@@ -1,49 +1,23 @@
-## OBAZL GENERATED FILE ## To retain edits (prevent overwrite), delete this line.
-
 load(
     "@obazl_rules_ocaml//ocaml:rules.bzl",
-    "ocaml_archive",
     "ocaml_module",
-    "ocaml_ns",
-)
-
-################################################################
-## STANZA 1: LIBRARY PPX_VERSION_RUNTIME
-################################################################
-PPX_VERSION_RUNTIME_MODULE_OPTS = []
-
-PPX_VERSION_RUNTIME_DEPS = [
-    # do not sort (buildifier)
-    "@opam//pkg:core_kernel",
-]
-
-##############
-ocaml_archive(
-    name = "ppx_version_runtime",
-    opts = [],
-    visibility = ["//visibility:public"],
-    deps = PPX_VERSION_RUNTIME_DEPS + [
-        # do not sort (buildifier)
-        ":_Serialization",
-    ],
+    "ocaml_ns_library",
 )
 
 #########
-ocaml_ns(
-    name = "Ppx_version_runtime_ns",
-    ns = "ppx_version_runtime",
-    opts = [],
-    submodules = [
-        # do not sort (buildifier)
-        "serialization.ml",
-    ],
+ocaml_ns_library(
+    name = "ppx_version_runtime",
+    submodules = {
+        ":_Serialization": "Serialization",
+    },
+    visibility = ["//visibility:public"]
 )
 
 #############
 ocaml_module(
-    name = "_Serialization",
-    src = "serialization.ml",
-    ns = ":Ppx_version_runtime_ns",
-    opts = PPX_VERSION_RUNTIME_MODULE_OPTS,
-    deps = PPX_VERSION_RUNTIME_DEPS,
+    name   = "_Serialization",
+    struct = "serialization.ml",
+    deps_opam = [
+        "core_kernel"
+    ]
 )

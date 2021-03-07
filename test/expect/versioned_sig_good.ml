@@ -1,5 +1,3 @@
-let () =
-  Ppx_module_timer_runtime.record_start Ppx_module_timer_runtime.__MODULE__
 open Core_kernel
 module Good =
   struct
@@ -449,5 +447,3 @@ module Good =
       end
     let is_42 t = Int.(=) t 42
   end
-let () =
-  Ppx_module_timer_runtime.record_until Ppx_module_timer_runtime.__MODULE__
