@@ -6,7 +6,7 @@ load(
 
 #########
 ocaml_ns_library(
-    name = "ppx_version_runtime",
+    name = "#ppx_version_runtime",
     submodules = {
         ":_Serialization": "Serialization",
     },

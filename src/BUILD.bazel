@@ -23,27 +23,27 @@ PPX_VERSION_PPX = "//bzl/ppx/exe:ppxlib.metaquot"
 ##############
 ppx_ns_library(
 # ppx_library(
-    name = "ppx_version",
-    submodules = {
-        ":Bin_io_unversioned": "Bin_io_unversioned",
-        ":Dummy_derivers": "Dummy_derivers",
-        ":Lint_version_syntax": "Lint_version_syntax",
-        ":Versioned_type": "Versioned_type",
-        ":Versioned_module": "Versioned_module",
-        ":Versioned_util": "Versioned_util",
-    },
+    name = "#ppx_version",
+    submodules = [
+        ":Bin_io_unversioned",
+        ":Dummy_derivers",
+        ":Lint_version_syntax",
+        ":Versioned_type",
+        ":Versioned_module",
+        ":Versioned_util"
+    ],
     visibility = ["//visibility:public"],
 )
 
 ###########
 ppx_module(
     name = "Bin_io_unversioned",
+    struct = "bin_io_unversioned.ml",
     deps_adjunct = [
         # "@ppx_version//src/runtime:ppx_version_runtime",
     ],
     deps_opam = PPX_VERSION_OPAM_DEPS,
     ppx = PPX_VERSION_PPX,
-    struct = "bin_io_unversioned.ml",
     deps = [
         # do not sort (buildifier)
         "Versioned_util",

@@ -15,14 +15,16 @@ http_archive(
 load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
 bazel_skylib_workspace()
 
-###############
-git_repository(
+#############
+http_archive(
     name = "obazl_rules_ocaml",
-    remote = "https://github.com/obazl/rules_ocaml",
-    # tag    = "v0.1.0-beta.1"
-    branch = "dev",
+    strip_prefix = "rules_ocaml-06eaca64f51a198978a803532b9e0be1c52ff45d",
+    urls = [
+        "https://github.com/obazl/rules_ocaml/archive/06eaca64f51a198978a803532b9e0be1c52ff45d.tar.gz"
+    ],
+    sha256 = "45fdda94f8e66982ae7c0a43527c6254b31af32484bdc8a57a789bfd918e52b3"
 )
-load("@obazl_rules_ocaml//ocaml:bootstrap.bzl", "ocaml_configure")
 
+load("@obazl_rules_ocaml//ocaml:bootstrap.bzl", "ocaml_configure")
 load("//:WORKSPACE.bzl", opam = "opam")
 ocaml_configure(opam=opam, build = "mina-0.1.0")
