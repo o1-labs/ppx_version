@@ -503,7 +503,7 @@ let convert_modbody ~loc ~version_option body =
   let (module Ast_builder) = Ast_builder.make loc in
   let rev_str =
     match !latest_version with
-    | Some latest_version ->
+    | Some latest_version -> (
         let open Ast_builder in
         let latest =
           pstr_module
@@ -511,7 +511,15 @@ let convert_modbody ~loc ~version_option body =
                ~expr:
                  (pmod_ident (Located.lident (sprintf "V%i" latest_version))))
         in
-        latest :: rev_str
+        (* insert Latest alias after latest versioned module
+           so subsequent modules can mention it
+        *)
+        match List.rev rev_str with
+        | vn :: vs ->
+            List.rev (vn :: latest :: vs)
+        | [] ->
+            (* should be unreachable *)
+            [latest] )
     | None ->
         rev_str
   in
@@ -748,7 +756,18 @@ let version_module_decl ~loc ~path:_ modname signature =
                   Bin_prot.Common.buf -> Latest.t option]
             else []
           in
-          List.rev sigitems @ (latest :: defs)
+          (* insert Latest alias after latest version module decl
+             so subsequent module decls can mention it
+          *)
+          let sigitems_with_latest =
+            match List.rev sigitems with
+            | vn :: vs ->
+                vn :: latest :: vs
+            | [] ->
+                (* should be unreachable *)
+                [latest]
+          in
+          sigitems_with_latest @ defs
     in
     let sigi = mk_module_decl modname (Pmty_signature signature) in
     match extra_sigitems with
