@@ -4,7 +4,6 @@ load("@obazl_rules_ocaml//ocaml:rules.bzl", "ppx_executable", "ppx_module")
 ppx_executable(
     name = "ppxlib.metaquot",
     main = ":ppxlib_driver",
-    opts = [],
     visibility = [
         "//src:__pkg__",
         "//tools:__pkg__",
@@ -18,7 +17,6 @@ ppx_executable(
 ###########
 ppx_module(
     name = "ppxlib_driver",
-    opts = ["-linkall"],
     struct = ":ppxlib_driver.ml",
     visibility = ["//visibility:public"],
     deps_opam = ["ppxlib"],

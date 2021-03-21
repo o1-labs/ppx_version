@@ -3,7 +3,7 @@ load(
     "ppx_archive",
     "ppx_library",
     "ppx_module",
-    "ppx_ns_library",
+    "ppx_ns_archive",
 )
 # load("@obazl_rules_ocaml//ocaml:macros.bzl", "ppx_ns_env")
 
@@ -21,9 +21,9 @@ PPX_VERSION_OPAM_DEPS = [
 PPX_VERSION_PPX = "//bzl/ppx/exe:ppxlib.metaquot"
 
 ##############
-ppx_ns_library(
-# ppx_library(
-    name = "#ppx_version",
+ppx_ns_archive(
+    name = "ppx_version",
+    opts = ["-linkall"],
     submodules = [
         ":Bin_io_unversioned",
         ":Dummy_derivers",

@@ -1,12 +1,12 @@
 load(
     "@obazl_rules_ocaml//ocaml:rules.bzl",
     "ocaml_module",
-    "ocaml_ns_library",
+    "ocaml_ns_archive",
 )
 
 #########
-ocaml_ns_library(
-    name = "#ppx_version_runtime",
+ocaml_ns_archive(
+    name = "ppx_version_runtime",
     submodules = {
         ":_Serialization": "Serialization",
     },

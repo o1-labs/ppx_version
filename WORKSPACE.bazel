@@ -18,11 +18,12 @@ bazel_skylib_workspace()
 #############
 http_archive(
     name = "obazl_rules_ocaml",
-    strip_prefix = "rules_ocaml-06eaca64f51a198978a803532b9e0be1c52ff45d",
+    strip_prefix = "rules_ocaml-b8ccb8eb0738f303b1a68b89d4af5998fa30c955",
     urls = [
-        "https://github.com/obazl/rules_ocaml/archive/06eaca64f51a198978a803532b9e0be1c52ff45d.tar.gz"
+        "https://github.com/obazl/rules_ocaml/archive/b8ccb8eb0738f303b1a68b89d4af5998fa30c955.tar.gz"
     ],
-    sha256 = "45fdda94f8e66982ae7c0a43527c6254b31af32484bdc8a57a789bfd918e52b3"
+    sha256 = "168bd297208ad9050dbe913e6bc85c1ca4bdfcd3884a76c3b34c4bd970d4caba"
+
 )
 
 load("@obazl_rules_ocaml//ocaml:bootstrap.bzl", "ocaml_configure")
