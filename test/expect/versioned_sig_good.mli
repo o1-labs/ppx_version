@@ -28,7 +28,7 @@ sig
         end
         module Latest = V2
         val versions : (int * (Core_kernel.Bigstring.t -> Latest.t)) array
-        val deserialize_binary_opt : Bin_prot.Common.buf -> Latest.t option
+        val bin_read_to_latest_opt : Bin_prot.Common.buf -> Latest.t option
       end
       type t = Stable.Latest.t
     end

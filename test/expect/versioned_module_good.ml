@@ -642,7 +642,7 @@ module M1 =
                   ((fun buf ->
                       let pos_ref = ref 0 in
                       V3.to_latest (V3.bin_read_t buf ~pos_ref))))|]
-            let deserialize_binary_opt buf =
+            let bin_read_to_latest_opt buf =
               let open Core_kernel in
                 let pos_ref = ref 0 in
                 let version = Bin_prot.Std.bin_read_int ~pos_ref buf in
@@ -651,7 +651,7 @@ module M1 =
                         if Int.equal i version then Some (f buf) else None)
               [@@ocaml.doc
                 " deserializes data to the latest module version's type "]
-            let _ = deserialize_binary_opt
+            let _ = bin_read_to_latest_opt
           end
         type t = Stable.Latest.t
       end
@@ -668,7 +668,7 @@ let () =
     assert (z = x);
     (try ignore (M1.Stable.V2.bin_read_t buf ~pos_ref:(ref 0)); assert false
      with | Failure _ -> ());
-    (match M1.Stable.deserialize_binary_opt buf with
+    (match M1.Stable.bin_read_to_latest_opt buf with
      | Some a -> assert (a = x)
      | None -> assert false)))
 module M2 =
@@ -2468,7 +2468,7 @@ module M3 =
                                                                     (V3.bin_read_t
                                                                     buf
                                                                     ~pos_ref))))|]
-            let deserialize_binary_opt buf =
+            let bin_read_to_latest_opt buf =
               let open Core_kernel in
                 let pos_ref = ref 0 in
                 let version = Bin_prot.Std.bin_read_int ~pos_ref buf in
@@ -2477,7 +2477,7 @@ module M3 =
                         if Int.equal i version then Some (f buf) else None)
               [@@ocaml.doc
                 " deserializes data to the latest module version's type "]
-            let _ = deserialize_binary_opt
+            let _ = bin_read_to_latest_opt
           end
         type t = Stable.Latest.t = {
           a: bool ;
@@ -2845,7 +2845,7 @@ module M4 =
                   ((fun buf ->
                       let pos_ref = ref 0 in
                       V1.to_latest (V1.bin_read_t buf ~pos_ref))))|]
-            let deserialize_binary_opt buf =
+            let bin_read_to_latest_opt buf =
               let open Core_kernel in
                 let pos_ref = ref 0 in
                 let version = Bin_prot.Std.bin_read_int ~pos_ref buf in
@@ -2854,7 +2854,7 @@ module M4 =
                         if Int.equal i version then Some (f buf) else None)
               [@@ocaml.doc
                 " deserializes data to the latest module version's type "]
-            let _ = deserialize_binary_opt
+            let _ = bin_read_to_latest_opt
           end
         type t = Stable.Latest.t = {
           a: bool ;
@@ -3146,7 +3146,7 @@ module M5 =
                   ((fun buf ->
                       let pos_ref = ref 0 in
                       V1.to_latest (V1.bin_read_t buf ~pos_ref))))|]
-            let deserialize_binary_opt buf =
+            let bin_read_to_latest_opt buf =
               let open Core_kernel in
                 let pos_ref = ref 0 in
                 let version = Bin_prot.Std.bin_read_int ~pos_ref buf in
@@ -3155,7 +3155,7 @@ module M5 =
                         if Int.equal i version then Some (f buf) else None)
               [@@ocaml.doc
                 " deserializes data to the latest module version's type "]
-            let _ = deserialize_binary_opt
+            let _ = bin_read_to_latest_opt
           end
         type t = Stable.Latest.t
       end
@@ -3379,7 +3379,7 @@ module M6 =
                   ((fun buf ->
                       let pos_ref = ref 0 in
                       V1.to_latest (V1.bin_read_t buf ~pos_ref))))|]
-            let deserialize_binary_opt buf =
+            let bin_read_to_latest_opt buf =
               let open Core_kernel in
                 let pos_ref = ref 0 in
                 let version = Bin_prot.Std.bin_read_int ~pos_ref buf in
@@ -3388,7 +3388,7 @@ module M6 =
                         if Int.equal i version then Some (f buf) else None)
               [@@ocaml.doc
                 " deserializes data to the latest module version's type "]
-            let _ = deserialize_binary_opt
+            let _ = bin_read_to_latest_opt
           end
         type t = Stable.Latest.t
       end
@@ -3628,7 +3628,7 @@ module M7 =
                   ((fun buf ->
                       let pos_ref = ref 0 in
                       V1.to_latest (V1.bin_read_t buf ~pos_ref))))|]
-            let deserialize_binary_opt buf =
+            let bin_read_to_latest_opt buf =
               let open Core_kernel in
                 let pos_ref = ref 0 in
                 let version = Bin_prot.Std.bin_read_int ~pos_ref buf in
@@ -3637,7 +3637,7 @@ module M7 =
                         if Int.equal i version then Some (f buf) else None)
               [@@ocaml.doc
                 " deserializes data to the latest module version's type "]
-            let _ = deserialize_binary_opt
+            let _ = bin_read_to_latest_opt
           end
         type t = Stable.Latest.t
       end
@@ -3878,7 +3878,7 @@ module M8 =
                   ((fun buf ->
                       let pos_ref = ref 0 in
                       V1.to_latest (V1.bin_read_t buf ~pos_ref))))|]
-            let deserialize_binary_opt buf =
+            let bin_read_to_latest_opt buf =
               let open Core_kernel in
                 let pos_ref = ref 0 in
                 let version = Bin_prot.Std.bin_read_int ~pos_ref buf in
@@ -3887,7 +3887,7 @@ module M8 =
                         if Int.equal i version then Some (f buf) else None)
               [@@ocaml.doc
                 " deserializes data to the latest module version's type "]
-            let _ = deserialize_binary_opt
+            let _ = bin_read_to_latest_opt
           end
         type t = Stable.Latest.t
       end

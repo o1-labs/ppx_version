@@ -28,7 +28,7 @@ has type `Vn.t -> Latest.t`.
 
 The `Stable` module contains the generated function
 ```ocaml
-val deserialize_binary_opt : Bin_prot.Common.buf -> Stable.Latest.t option
+val bin_read_to_latest_opt : Bin_prot.Common.buf -> pos_ref:(int ref) -> Stable.Latest.t option
 ```
 Given a buffer containing a serialization of a type from any of the
 versioned modules, this function will return an instance of `Stable.Latest.t`.
@@ -61,7 +61,7 @@ A stable type in a signature:
     end
   end]
 ```
-A `val` declaration for `deserialize_binary_opt` and the
+A `val` declaration for `bin_read_to_latest_opt` and the
 `Latest` module alias are generated for the signature.
 
 Another place you may want stable types is in the definition of

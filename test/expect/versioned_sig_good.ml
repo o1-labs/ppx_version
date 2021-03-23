@@ -434,7 +434,7 @@ module Good =
                                                                     (V2.bin_read_t
                                                                     buf
                                                                     ~pos_ref))))|]
-            let deserialize_binary_opt buf =
+            let bin_read_to_latest_opt buf =
               let open Core_kernel in
                 let pos_ref = ref 0 in
                 let version = Bin_prot.Std.bin_read_int ~pos_ref buf in
@@ -443,7 +443,7 @@ module Good =
                         if Int.equal i version then Some (f buf) else None)
               [@@ocaml.doc
                 " deserializes data to the latest module version's type "]
-            let _ = deserialize_binary_opt
+            let _ = bin_read_to_latest_opt
           end
         type t = Stable.Latest.t
       end
