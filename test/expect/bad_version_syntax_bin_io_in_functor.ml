@@ -1,8 +1,6 @@
 [@@@ocaml.ppwarning
   "Deriving bin_io and deriving version disallowed for types in functor body"]
 [@@@ocaml.ppwarning "Versioned type must be in %%versioned extension"]
-let () =
-  Ppx_module_timer_runtime.record_start Ppx_module_timer_runtime.__MODULE__
 open Core_kernel
 module Functor(X:sig  end) =
   struct
@@ -57,5 +55,3 @@ module Functor(X:sig  end) =
           end
       end
   end
-let () =
-  Ppx_module_timer_runtime.record_until Ppx_module_timer_runtime.__MODULE__

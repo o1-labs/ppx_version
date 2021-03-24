@@ -1,5 +1,3 @@
-let () =
-  Ppx_module_timer_runtime.record_start Ppx_module_timer_runtime.__MODULE__
 open Core_kernel
 module Type =
   struct
@@ -446,5 +444,3 @@ module Type =
         type t = Stable.Latest.t
       end
   end
-let () =
-  Ppx_module_timer_runtime.record_until Ppx_module_timer_runtime.__MODULE__

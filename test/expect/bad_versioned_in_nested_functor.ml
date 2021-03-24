@@ -1,6 +1,4 @@
 [@@@ocaml.ppwarning "Cannot use versioned extension within a functor body"]
-let () =
-  Ppx_module_timer_runtime.record_start Ppx_module_timer_runtime.__MODULE__
 open Core_kernel
 module Functor(X:sig  end)(Y:sig val _y : int end) =
   struct
@@ -274,5 +272,3 @@ module Functor(X:sig  end)(Y:sig val _y : int end) =
         type t = Stable.Latest.t
       end
   end
-let () =
-  Ppx_module_timer_runtime.record_until Ppx_module_timer_runtime.__MODULE__
