@@ -3,8 +3,6 @@
 [@@@ocaml.ppwarning "Must have deriving version if deriving bin_io"]
 [@@@ocaml.ppwarning "Must have deriving version if deriving bin_io"]
 [@@@ocaml.ppwarning "Must have deriving version if deriving bin_io"]
-let () =
-  Ppx_module_timer_runtime.record_start Ppx_module_timer_runtime.__MODULE__
 open Core_kernel
 module Foo =
   struct
@@ -178,5 +176,3 @@ let bin_t =
     shape = bin_shape_t
   }
 let _ = bin_t
-let () =
-  Ppx_module_timer_runtime.record_until Ppx_module_timer_runtime.__MODULE__

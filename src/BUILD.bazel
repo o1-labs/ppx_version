@@ -1,78 +1,51 @@
 load(
     "@obazl_rules_ocaml//ocaml:rules.bzl",
     "ppx_archive",
+    "ppx_library",
     "ppx_module",
-    "ppx_ns",
+    "ppx_ns_archive",
 )
+# load("@obazl_rules_ocaml//ocaml:macros.bzl", "ppx_ns_env")
 
-################################################################
-## PPX STANZA 1: PPX_VERSION
-################################################################
-PPX_VERSION_PPX_MODULE_OPTS = []
+# ppx_ns_env(aliases = glob(["*.ml"]))
 
-PPX_VERSION_DEPS = [
+#########################
+PPX_VERSION_OPAM_DEPS = [
     # do not sort (buildifier)
-    "@opam//pkg:compiler-libs.common",
-    "@opam//pkg:ppxlib",
-    "@opam//pkg:ppx_bin_prot",
-    "@opam//pkg:core_kernel",
+    "compiler-libs.common",
+    "ppxlib",
+    "ppx_bin_prot",
+    "core_kernel",
 ]
 
 PPX_VERSION_PPX = "//bzl/ppx/exe:ppxlib.metaquot"
 
-PPX_VERSION_PPX_ARGS = []
-
-############
-ppx_archive(
+##############
+ppx_ns_archive(
     name = "ppx_version",
-    opts = [],
-    visibility = ["//visibility:public"],
-    deps = PPX_VERSION_DEPS + [
-        # do not sort (buildifier)
-        ":Ppx_version_ns",
+    opts = ["-linkall"],
+    submodules = [
         ":Bin_io_unversioned",
         ":Dummy_derivers",
         ":Lint_version_syntax",
         ":Versioned_type",
         ":Versioned_module",
-        ":Versioned_util",
+        ":Versioned_util"
     ],
-)
-
-#########
-ppx_ns(
-    name = "Ppx_version_ns",
-    ns = "ppx_version",
-    opts = [],
-    submodules = [
-        # do not sort (buildifier)
-        "bin_io_unversioned.ml",
-        "dummy_derivers.ml",
-        "lint_version_syntax.ml",
-        "versioned_module.ml",
-        "versioned_type.ml",
-        "versioned_util.ml",
-    ],
+    visibility = ["//visibility:public"],
 )
 
 ###########
 ppx_module(
     name = "Bin_io_unversioned",
-    src = "bin_io_unversioned.ml",
-    lazy_deps = [
-        # do not sort (buildifier)
-        "@ppx_version//src/runtime:ppx_version_runtime",
+    struct = "bin_io_unversioned.ml",
+    deps_adjunct = [
+        # "@ppx_version//src/runtime:ppx_version_runtime",
     ],
-    ns = ":Ppx_version_ns",
-    opts = PPX_VERSION_PPX_MODULE_OPTS,
+    deps_opam = PPX_VERSION_OPAM_DEPS,
     ppx = PPX_VERSION_PPX,
-    ppx_args = PPX_VERSION_PPX_ARGS,
     deps = [
         # do not sort (buildifier)
-        "@opam//pkg:compiler-libs.common",
-        "@opam//pkg:ppxlib",
-        "@opam//pkg:ppx_bin_prot",
-        "@opam//pkg:core_kernel",
         "Versioned_util",
     ],
 )
@@ -80,42 +53,26 @@ ppx_module(
 ###########
 ppx_module(
     name = "Dummy_derivers",
-    src = "dummy_derivers.ml",
-    lazy_deps = [
+    deps_adjunct = [
         # do not sort (buildifier)
-        "@ppx_version//src/runtime:ppx_version_runtime",
+        # "@ppx_version//src/runtime:ppx_version_runtime",
     ],
-    ns = ":Ppx_version_ns",
-    opts = PPX_VERSION_PPX_MODULE_OPTS,
+    deps_opam = PPX_VERSION_OPAM_DEPS,
     ppx = PPX_VERSION_PPX,
-    ppx_args = PPX_VERSION_PPX_ARGS,
-    deps = [
-        # do not sort (buildifier)
-        "@opam//pkg:compiler-libs.common",
-        "@opam//pkg:ppxlib",
-        "@opam//pkg:ppx_bin_prot",
-        "@opam//pkg:core_kernel",
-    ],
+    struct = "dummy_derivers.ml",
 )
 
 ###########
 ppx_module(
     name = "Lint_version_syntax",
-    src = "lint_version_syntax.ml",
-    lazy_deps = [
+    deps_adjunct = [
         # do not sort (buildifier)
-        "@ppx_version//src/runtime:ppx_version_runtime",
+        # "@ppx_version//src/runtime:ppx_version_runtime",
     ],
-    ns = ":Ppx_version_ns",
-    opts = PPX_VERSION_PPX_MODULE_OPTS,
+    deps_opam = PPX_VERSION_OPAM_DEPS,
     ppx = PPX_VERSION_PPX,
-    ppx_args = PPX_VERSION_PPX_ARGS,
+    struct = "lint_version_syntax.ml",
     deps = [
-        # do not sort (buildifier)
-        "@opam//pkg:compiler-libs.common",
-        "@opam//pkg:ppxlib",
-        "@opam//pkg:ppx_bin_prot",
-        "@opam//pkg:core_kernel",
         "Versioned_util",
     ],
 )
@@ -123,21 +80,14 @@ ppx_module(
 ###########
 ppx_module(
     name = "Versioned_module",
-    src = "versioned_module.ml",
-    lazy_deps = [
+    deps_adjunct = [
         # do not sort (buildifier)
-        "@ppx_version//src/runtime:ppx_version_runtime",
+        # "@ppx_version//src/runtime:ppx_version_runtime",
     ],
-    ns = ":Ppx_version_ns",
-    opts = PPX_VERSION_PPX_MODULE_OPTS,
+    deps_opam = PPX_VERSION_OPAM_DEPS,
     ppx = PPX_VERSION_PPX,
-    ppx_args = PPX_VERSION_PPX_ARGS,
+    struct = "versioned_module.ml",
     deps = [
-        # do not sort (buildifier)
-        "@opam//pkg:compiler-libs.common",
-        "@opam//pkg:ppxlib",
-        "@opam//pkg:ppx_bin_prot",
-        "@opam//pkg:core_kernel",
         "Versioned_util",
     ],
 )
@@ -145,21 +95,14 @@ ppx_module(
 ###########
 ppx_module(
     name = "Versioned_type",
-    src = "versioned_type.ml",
-    lazy_deps = [
+    deps_adjunct = [
         # do not sort (buildifier)
-        "@ppx_version//src/runtime:ppx_version_runtime",
+        # "@ppx_version//src/runtime:ppx_version_runtime",
     ],
-    ns = ":Ppx_version_ns",
-    opts = PPX_VERSION_PPX_MODULE_OPTS,
+    deps_opam = PPX_VERSION_OPAM_DEPS,
     ppx = PPX_VERSION_PPX,
-    ppx_args = PPX_VERSION_PPX_ARGS,
+    struct = "versioned_type.ml",
     deps = [
-        # do not sort (buildifier)
-        "@opam//pkg:compiler-libs.common",
-        "@opam//pkg:ppxlib",
-        "@opam//pkg:ppx_bin_prot",
-        "@opam//pkg:core_kernel",
         "Versioned_util",
     ],
 )
@@ -167,17 +110,8 @@ ppx_module(
 ###########
 ppx_module(
     name = "Versioned_util",
-    src = "versioned_util.ml",
-    lazy_deps = ["@ppx_version//src/runtime:ppx_version_runtime"],
-    ns = ":Ppx_version_ns",
-    opts = PPX_VERSION_PPX_MODULE_OPTS,
+    # deps_adjunct = ["@ppx_version//src/runtime:ppx_version_runtime"],
+    deps_opam = PPX_VERSION_OPAM_DEPS,
     ppx = PPX_VERSION_PPX,
-    ppx_args = PPX_VERSION_PPX_ARGS,
-    deps = [
-        # do not sort (buildifier)
-        "@opam//pkg:compiler-libs.common",
-        "@opam//pkg:ppxlib",
-        "@opam//pkg:ppx_bin_prot",
-        "@opam//pkg:core_kernel",
-    ],
+    struct = "versioned_util.ml",
 )
