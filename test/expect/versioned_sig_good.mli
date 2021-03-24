@@ -15,6 +15,7 @@ sig
               val __versioned__ : unit
             end[@@ocaml.doc "@inline"]
         end
+        module Latest = V2
         module V1 :
         sig
           type t = string[@@deriving (bin_io, version)]
@@ -26,9 +27,11 @@ sig
             end[@@ocaml.doc "@inline"]
           val to_latest : t -> V2.t
         end
-        module Latest = V2
-        val versions : (int * (Core_kernel.Bigstring.t -> Latest.t)) array
-        val bin_read_to_latest_opt : Bin_prot.Common.buf -> Latest.t option
+        val versions :
+          (int * (Core_kernel.Bigstring.t -> pos_ref:int ref -> Latest.t))
+            array
+        val bin_read_to_latest_opt :
+          Bin_prot.Common.buf -> pos_ref:int ref -> Latest.t option
       end
       type t = Stable.Latest.t
     end

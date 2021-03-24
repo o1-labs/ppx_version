@@ -259,7 +259,7 @@ ppx_expect_test(
 ###############
 ppx_executable(
     name = "ppx",
-    main = "//bzl/ppx/exe:Driver",
+    main = "//bzl/ppx/exe:ppxlib_driver",
     deps = [
         "//src:ppx_version"
     ],
