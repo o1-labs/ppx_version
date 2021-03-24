@@ -77,8 +77,8 @@ ppx_expect_test(
 
 ppx_expect_test(
     name    = "versioned_module_good",
-    src     = "versioned_good.ml",
-    expect  = {"expect/versioned_good.ml": "stdout"},
+    src     = "versioned_module_good.ml",
+    expect  = {"expect/versioned_module_good.ml": "stdout"},
     ppx     = ":ppx",
     timeout = "short"
 )
