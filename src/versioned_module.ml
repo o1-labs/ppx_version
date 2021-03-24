@@ -532,7 +532,7 @@ let convert_modbody ~loc ~version_option body =
                values do not convert to [Latest.t].
             *)
             let (versions :
-                  (int * (Core_kernel.Bigstring.t -> Latest.t)) array) =
+                  (int * (Core_kernel.Bigstring.t -> pos_ref:(int ref) -> Latest.t)) array) =
               [%e
                 let open Ast_builder in
                 pexp_array
@@ -546,25 +546,27 @@ let convert_modbody ~loc ~version_option body =
                        pexp_tuple
                          [ eint version
                          ; [%expr
-                             fun buf ->
-                               let pos_ref = ref 0 in
+                             fun buf ~pos_ref ->
                                [%e pexp_ident (dot "bin_read_t")] buf ~pos_ref
                                |> [%e pexp_ident (dot "to_latest")]] ] ))]]
         in
         let convert =
           [%stri
             (** deserializes data to the latest module version's type *)
-            let deserialize_binary_opt buf =
+            let bin_read_to_latest_opt buf ~pos_ref =
               let open Core_kernel in
-              let pos_ref = ref 0 in
               (* Rely on layout, assume that the first element of the record is
-                 the first data in the buffer.
+                 at pos_ref in the buffer
+                 The reader `f` will re-read the version, so we save the
+                 position and restore pos_ref
               *)
+              let saved_pos = !pos_ref in
               let version = Bin_prot.Std.bin_read_int ~pos_ref buf in
+              let pos_ref = ref saved_pos in
               Array.find_map versions ~f:(fun (i, f) ->
-                  if Int.equal i version then Some (f buf) else None )]
+                  if Int.equal i version then Some (f buf ~pos_ref) else None )]
         in
-        let convert_guard = [%stri let _ = deserialize_binary_opt] in
+        let convert_guard = [%stri let _ = bin_read_to_latest_opt] in
         convert_guard :: convert :: versions :: rev_str
     | _ ->
         rev_str
@@ -599,7 +601,7 @@ let version_module ~loc ~version_option ~path:_ modname modbody =
 
    - add deriving bin_io, version to list of deriving items for the type "t" in versioned modules
    - add "module Latest = Vn" to Stable module
-   - if Stable.Latest.t has no parameters, add signature items for "versions" and "deserialize_binary_opt"
+   - if Stable.Latest.t has no parameters, add signature items for "versions" and "bin_read_to_latest_opt"
  *)
 
 (* parameterless_t means the type t in the module type has no parameters *)
@@ -750,10 +752,10 @@ let version_module_decl ~loc ~path:_ modname signature =
             if convertible then
               [%sig:
                 val versions :
-                  (int * (Core_kernel.Bigstring.t -> Latest.t)) array
+                  (int * (Core_kernel.Bigstring.t -> pos_ref:(int ref) -> Latest.t)) array
 
-                val deserialize_binary_opt :
-                  Bin_prot.Common.buf -> Latest.t option]
+                val bin_read_to_latest_opt :
+                  Bin_prot.Common.buf -> pos_ref:(int ref) -> Latest.t option]
             else []
           in
           (* insert Latest alias after latest version module decl

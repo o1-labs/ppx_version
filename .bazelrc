@@ -1,1 +1,13 @@
+build --color=yes
+
+build:native --@ocaml//mode=native
+build:native --@ppx//mode=native
+
+build:bytecode --@ocaml//mode=bytecode
+build:bytecode --@ppx//mode=bytecode
+
+build:dbg --subcommands=pretty_print
+build:dbg --verbose_failures
+build:dbg --sandbox_debug
+
 try-import user.bazelrc

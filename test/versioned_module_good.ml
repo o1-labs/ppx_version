@@ -45,10 +45,10 @@ let () =
       ignore (M1.Stable.V2.bin_read_t buf ~pos_ref:(ref 0)) ;
       assert false
     with Failure _ -> () ) ;
-  (* Test that [deserialize_binary_opt] finds and uses the right
+  (* Test that [bin_read_to_latest_opt] finds and uses the right
      deserialisation.
   *)
-  match M1.Stable.deserialize_binary_opt buf with
+  match M1.Stable.bin_read_to_latest_opt buf ~pos_ref:(ref 0) with
   | Some a ->
       assert (a = x)
   | None ->

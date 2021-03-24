@@ -15,28 +15,17 @@ http_archive(
 load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
 bazel_skylib_workspace()
 
-###############
-git_repository(
-    name = "obazl_tools_bazel",
-    remote = "https://github.com/obazl/tools_bazel",
-    branch = "main",
-)
-git_repository(
-    name = "obazl_rules_opam",
-    remote = "https://github.com/obazl/rules_opam",
-    branch = "main",
-)
-git_repository(
+#############
+http_archive(
     name = "obazl_rules_ocaml",
-    remote = "https://github.com/obazl/rules_ocaml",
-    branch = "main",
+    strip_prefix = "rules_ocaml-b8ccb8eb0738f303b1a68b89d4af5998fa30c955",
+    urls = [
+        "https://github.com/obazl/rules_ocaml/archive/b8ccb8eb0738f303b1a68b89d4af5998fa30c955.tar.gz"
+    ],
+    sha256 = "168bd297208ad9050dbe913e6bc85c1ca4bdfcd3884a76c3b34c4bd970d4caba"
+
 )
 
-load("@obazl_rules_opam//opam:bootstrap.bzl", opam_configure = "configure")
-load("//bzl:opam.bzl", "opam")
-switch = opam_configure(opam = opam)
-
-load("@obazl_rules_ocaml//ocaml:bootstrap.bzl", ocaml_configure = "configure")
-ocaml_configure( switch = switch)
-
-
+load("@obazl_rules_ocaml//ocaml:bootstrap.bzl", "ocaml_configure")
+load("//:WORKSPACE.bzl", opam = "opam")
+ocaml_configure(opam=opam, build = "mina-0.1.0")

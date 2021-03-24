@@ -1,6 +1,4 @@
 [@@@ocaml.ppwarning "Versioned type must be in %%versioned extension"]
-let () =
-  Ppx_module_timer_runtime.record_start Ppx_module_timer_runtime.__MODULE__
 open Core_kernel
 module Stable =
   struct
@@ -52,5 +50,3 @@ module Stable =
           end
       end
   end
-let () =
-  Ppx_module_timer_runtime.record_until Ppx_module_timer_runtime.__MODULE__

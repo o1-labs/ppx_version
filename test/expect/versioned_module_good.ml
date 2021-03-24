@@ -1,5 +1,3 @@
-let () =
-  Ppx_module_timer_runtime.record_start Ppx_module_timer_runtime.__MODULE__
 open Core_kernel
 module M1 =
   struct
@@ -212,6 +210,7 @@ module M1 =
                   (bin_read_t, __bin_read_t__, bin_size_t, bin_write_t,
                     bin_shape_t, bin_reader_t, bin_writer_t, bin_t)
               end
+            module Latest = V3
             module V2 =
               struct
                 type t = int[@@deriving (bin_io, version)]
@@ -622,36 +621,35 @@ module M1 =
                   (bin_read_t, __bin_read_t__, bin_size_t, bin_write_t,
                     bin_shape_t, bin_reader_t, bin_writer_t, bin_t)
               end
-            module Latest = V3
             let (versions :
-              (int * (Core_kernel.Bigstring.t -> Latest.t)) array) =
+              (int *
+                (Core_kernel.Bigstring.t -> pos_ref:int ref -> Latest.t))
+                array)
+              =
               [|(1,
                   ((fun buf ->
-                      let pos_ref = ref 0 in
-                      V1.to_latest (V1.bin_read_t buf ~pos_ref))));(2,
-                                                                    ((
-                                                                    fun buf
-                                                                    ->
-                                                                    let pos_ref
-                                                                    = ref 0 in
-                                                                    V2.to_latest
-                                                                    (V2.bin_read_t
-                                                                    buf
-                                                                    ~pos_ref))));
+                      fun ~pos_ref ->
+                        V1.to_latest (V1.bin_read_t buf ~pos_ref))));
+                (2,
+                  ((fun buf ->
+                      fun ~pos_ref ->
+                        V2.to_latest (V2.bin_read_t buf ~pos_ref))));
                 (3,
                   ((fun buf ->
-                      let pos_ref = ref 0 in
-                      V3.to_latest (V3.bin_read_t buf ~pos_ref))))|]
-            let deserialize_binary_opt buf =
+                      fun ~pos_ref ->
+                        V3.to_latest (V3.bin_read_t buf ~pos_ref))))|]
+            let bin_read_to_latest_opt buf ~pos_ref  =
               let open Core_kernel in
-                let pos_ref = ref 0 in
+                let saved_pos = !pos_ref in
                 let version = Bin_prot.Std.bin_read_int ~pos_ref buf in
+                let pos_ref = ref saved_pos in
                 Array.find_map versions
                   ~f:(fun (i, f) ->
-                        if Int.equal i version then Some (f buf) else None)
-              [@@ocaml.doc
-                " deserializes data to the latest module version's type "]
-            let _ = deserialize_binary_opt
+                        if Int.equal i version
+                        then Some (f buf ~pos_ref)
+                        else None)[@@ocaml.doc
+                                    " deserializes data to the latest module version's type "]
+            let _ = bin_read_to_latest_opt
           end
         type t = Stable.Latest.t
       end
@@ -668,7 +666,7 @@ let () =
     assert (z = x);
     (try ignore (M1.Stable.V2.bin_read_t buf ~pos_ref:(ref 0)); assert false
      with | Failure _ -> ());
-    (match M1.Stable.deserialize_binary_opt buf with
+    (match M1.Stable.bin_read_to_latest_opt buf ~pos_ref:(ref 0) with
      | Some a -> assert (a = x)
      | None -> assert false)))
 module M2 =
@@ -1037,6 +1035,7 @@ module M2 =
                   (bin_read_t, __bin_read_t__, bin_size_t, bin_write_t,
                     bin_shape_t, bin_reader_t, bin_writer_t, bin_t)
               end
+            module Latest = V3
             module V2 =
               struct
                 type 'a t = {
@@ -1623,7 +1622,6 @@ module M2 =
                   (bin_read_t, __bin_read_t__, bin_size_t, bin_write_t,
                     bin_shape_t, bin_reader_t, bin_writer_t, bin_t)
               end
-            module Latest = V3
           end
         type 'a t = 'a Stable.Latest.t = {
           a: 'a ;
@@ -1865,6 +1863,7 @@ module M3 =
                   (bin_read_t, __bin_read_t__, bin_size_t, bin_write_t,
                     bin_shape_t, bin_reader_t, bin_writer_t, bin_t)
               end
+            module Latest = V3
             module V2 =
               struct
                 type 'a t = {
@@ -2452,32 +2451,31 @@ module M3 =
                   (bin_read_t, __bin_read_t__, bin_size_t, bin_write_t,
                     bin_shape_t, bin_reader_t, bin_writer_t, bin_t)
               end
-            module Latest = V3
             let (versions :
-              (int * (Core_kernel.Bigstring.t -> Latest.t)) array) =
+              (int *
+                (Core_kernel.Bigstring.t -> pos_ref:int ref -> Latest.t))
+                array)
+              =
               [|(1,
                   ((fun buf ->
-                      let pos_ref = ref 0 in
-                      V1.to_latest (V1.bin_read_t buf ~pos_ref))));(3,
-                                                                    ((
-                                                                    fun buf
-                                                                    ->
-                                                                    let pos_ref
-                                                                    = ref 0 in
-                                                                    V3.to_latest
-                                                                    (V3.bin_read_t
-                                                                    buf
-                                                                    ~pos_ref))))|]
-            let deserialize_binary_opt buf =
+                      fun ~pos_ref ->
+                        V1.to_latest (V1.bin_read_t buf ~pos_ref))));
+                (3,
+                  ((fun buf ->
+                      fun ~pos_ref ->
+                        V3.to_latest (V3.bin_read_t buf ~pos_ref))))|]
+            let bin_read_to_latest_opt buf ~pos_ref  =
               let open Core_kernel in
-                let pos_ref = ref 0 in
+                let saved_pos = !pos_ref in
                 let version = Bin_prot.Std.bin_read_int ~pos_ref buf in
+                let pos_ref = ref saved_pos in
                 Array.find_map versions
                   ~f:(fun (i, f) ->
-                        if Int.equal i version then Some (f buf) else None)
-              [@@ocaml.doc
-                " deserializes data to the latest module version's type "]
-            let _ = deserialize_binary_opt
+                        if Int.equal i version
+                        then Some (f buf ~pos_ref)
+                        else None)[@@ocaml.doc
+                                    " deserializes data to the latest module version's type "]
+            let _ = bin_read_to_latest_opt
           end
         type t = Stable.Latest.t = {
           a: bool ;
@@ -2840,21 +2838,26 @@ module M4 =
               end
             module Latest = V1
             let (versions :
-              (int * (Core_kernel.Bigstring.t -> Latest.t)) array) =
+              (int *
+                (Core_kernel.Bigstring.t -> pos_ref:int ref -> Latest.t))
+                array)
+              =
               [|(1,
                   ((fun buf ->
-                      let pos_ref = ref 0 in
-                      V1.to_latest (V1.bin_read_t buf ~pos_ref))))|]
-            let deserialize_binary_opt buf =
+                      fun ~pos_ref ->
+                        V1.to_latest (V1.bin_read_t buf ~pos_ref))))|]
+            let bin_read_to_latest_opt buf ~pos_ref  =
               let open Core_kernel in
-                let pos_ref = ref 0 in
+                let saved_pos = !pos_ref in
                 let version = Bin_prot.Std.bin_read_int ~pos_ref buf in
+                let pos_ref = ref saved_pos in
                 Array.find_map versions
                   ~f:(fun (i, f) ->
-                        if Int.equal i version then Some (f buf) else None)
-              [@@ocaml.doc
-                " deserializes data to the latest module version's type "]
-            let _ = deserialize_binary_opt
+                        if Int.equal i version
+                        then Some (f buf ~pos_ref)
+                        else None)[@@ocaml.doc
+                                    " deserializes data to the latest module version's type "]
+            let _ = bin_read_to_latest_opt
           end
         type t = Stable.Latest.t = {
           a: bool ;
@@ -3141,21 +3144,26 @@ module M5 =
               end
             module Latest = V1
             let (versions :
-              (int * (Core_kernel.Bigstring.t -> Latest.t)) array) =
+              (int *
+                (Core_kernel.Bigstring.t -> pos_ref:int ref -> Latest.t))
+                array)
+              =
               [|(1,
                   ((fun buf ->
-                      let pos_ref = ref 0 in
-                      V1.to_latest (V1.bin_read_t buf ~pos_ref))))|]
-            let deserialize_binary_opt buf =
+                      fun ~pos_ref ->
+                        V1.to_latest (V1.bin_read_t buf ~pos_ref))))|]
+            let bin_read_to_latest_opt buf ~pos_ref  =
               let open Core_kernel in
-                let pos_ref = ref 0 in
+                let saved_pos = !pos_ref in
                 let version = Bin_prot.Std.bin_read_int ~pos_ref buf in
+                let pos_ref = ref saved_pos in
                 Array.find_map versions
                   ~f:(fun (i, f) ->
-                        if Int.equal i version then Some (f buf) else None)
-              [@@ocaml.doc
-                " deserializes data to the latest module version's type "]
-            let _ = deserialize_binary_opt
+                        if Int.equal i version
+                        then Some (f buf ~pos_ref)
+                        else None)[@@ocaml.doc
+                                    " deserializes data to the latest module version's type "]
+            let _ = bin_read_to_latest_opt
           end
         type t = Stable.Latest.t
       end
@@ -3374,21 +3382,26 @@ module M6 =
               end
             module Latest = V1
             let (versions :
-              (int * (Core_kernel.Bigstring.t -> Latest.t)) array) =
+              (int *
+                (Core_kernel.Bigstring.t -> pos_ref:int ref -> Latest.t))
+                array)
+              =
               [|(1,
                   ((fun buf ->
-                      let pos_ref = ref 0 in
-                      V1.to_latest (V1.bin_read_t buf ~pos_ref))))|]
-            let deserialize_binary_opt buf =
+                      fun ~pos_ref ->
+                        V1.to_latest (V1.bin_read_t buf ~pos_ref))))|]
+            let bin_read_to_latest_opt buf ~pos_ref  =
               let open Core_kernel in
-                let pos_ref = ref 0 in
+                let saved_pos = !pos_ref in
                 let version = Bin_prot.Std.bin_read_int ~pos_ref buf in
+                let pos_ref = ref saved_pos in
                 Array.find_map versions
                   ~f:(fun (i, f) ->
-                        if Int.equal i version then Some (f buf) else None)
-              [@@ocaml.doc
-                " deserializes data to the latest module version's type "]
-            let _ = deserialize_binary_opt
+                        if Int.equal i version
+                        then Some (f buf ~pos_ref)
+                        else None)[@@ocaml.doc
+                                    " deserializes data to the latest module version's type "]
+            let _ = bin_read_to_latest_opt
           end
         type t = Stable.Latest.t
       end
@@ -3623,21 +3636,26 @@ module M7 =
               end
             module Latest = V1
             let (versions :
-              (int * (Core_kernel.Bigstring.t -> Latest.t)) array) =
+              (int *
+                (Core_kernel.Bigstring.t -> pos_ref:int ref -> Latest.t))
+                array)
+              =
               [|(1,
                   ((fun buf ->
-                      let pos_ref = ref 0 in
-                      V1.to_latest (V1.bin_read_t buf ~pos_ref))))|]
-            let deserialize_binary_opt buf =
+                      fun ~pos_ref ->
+                        V1.to_latest (V1.bin_read_t buf ~pos_ref))))|]
+            let bin_read_to_latest_opt buf ~pos_ref  =
               let open Core_kernel in
-                let pos_ref = ref 0 in
+                let saved_pos = !pos_ref in
                 let version = Bin_prot.Std.bin_read_int ~pos_ref buf in
+                let pos_ref = ref saved_pos in
                 Array.find_map versions
                   ~f:(fun (i, f) ->
-                        if Int.equal i version then Some (f buf) else None)
-              [@@ocaml.doc
-                " deserializes data to the latest module version's type "]
-            let _ = deserialize_binary_opt
+                        if Int.equal i version
+                        then Some (f buf ~pos_ref)
+                        else None)[@@ocaml.doc
+                                    " deserializes data to the latest module version's type "]
+            let _ = bin_read_to_latest_opt
           end
         type t = Stable.Latest.t
       end
@@ -3873,21 +3891,26 @@ module M8 =
               end
             module Latest = V1
             let (versions :
-              (int * (Core_kernel.Bigstring.t -> Latest.t)) array) =
+              (int *
+                (Core_kernel.Bigstring.t -> pos_ref:int ref -> Latest.t))
+                array)
+              =
               [|(1,
                   ((fun buf ->
-                      let pos_ref = ref 0 in
-                      V1.to_latest (V1.bin_read_t buf ~pos_ref))))|]
-            let deserialize_binary_opt buf =
+                      fun ~pos_ref ->
+                        V1.to_latest (V1.bin_read_t buf ~pos_ref))))|]
+            let bin_read_to_latest_opt buf ~pos_ref  =
               let open Core_kernel in
-                let pos_ref = ref 0 in
+                let saved_pos = !pos_ref in
                 let version = Bin_prot.Std.bin_read_int ~pos_ref buf in
+                let pos_ref = ref saved_pos in
                 Array.find_map versions
                   ~f:(fun (i, f) ->
-                        if Int.equal i version then Some (f buf) else None)
-              [@@ocaml.doc
-                " deserializes data to the latest module version's type "]
-            let _ = deserialize_binary_opt
+                        if Int.equal i version
+                        then Some (f buf ~pos_ref)
+                        else None)[@@ocaml.doc
+                                    " deserializes data to the latest module version's type "]
+            let _ = bin_read_to_latest_opt
           end
         type t = Stable.Latest.t
       end
@@ -3901,5 +3924,3 @@ module M8 =
         type y = Stable.V1.y
       end
   end
-let () =
-  Ppx_module_timer_runtime.record_until Ppx_module_timer_runtime.__MODULE__
