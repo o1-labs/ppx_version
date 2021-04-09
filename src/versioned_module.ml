@@ -422,23 +422,28 @@ let convert_module_stri ~version_option last_version stri =
       else if version >= last_version then
         Location.raise_errorf ~loc
           "Versioned modules must be listed in decreasing order." ) ;
-  let type_stri, str_rest =
+  let stri, type_stri, str_rest =
     match str.txt with
     | [] ->
         Location.raise_errorf ~loc:str.loc
           "Expected a type declaration in this structure."
-    | ({pstr_desc= Pstr_module {pmb_name= {txt= "T"; _}; _}; _} as type_stri)
+    | ({ pstr_desc=
+          Pstr_module
+            { pmb_name= {txt= "T"; _}
+            ; pmb_expr= {pmod_desc= Pmod_structure (type_stri :: _); _}
+            ; _ }
+      ; _ } as stri)
       :: ( { pstr_desc=
                Pstr_include
                  {pincl_mod= {pmod_desc= Pmod_ident {txt= Lident "T"; _}; _}; _}
            ; _ }
            :: _ as str ) ->
-        (type_stri, str)
+        (stri, type_stri, str)
     | type_stri :: str ->
-        (type_stri, str)
+        (type_stri, type_stri, str)
   in
   let should_convert, type_str, with_version_bin_io_shadows =
-    version_type ~version_option version type_stri
+    version_type ~version_option version stri
   in
   (* TODO: If [should_convert] then look for [to_latest]. *)
   let open Ast_builder.Default in
@@ -532,7 +537,9 @@ let convert_modbody ~loc ~version_option body =
                values do not convert to [Latest.t].
             *)
             let (versions :
-                  (int * (Core_kernel.Bigstring.t -> pos_ref:(int ref) -> Latest.t)) array) =
+                  ( int
+                  * (Core_kernel.Bigstring.t -> pos_ref:int ref -> Latest.t) )
+                  array) =
               [%e
                 let open Ast_builder in
                 pexp_array
@@ -564,7 +571,8 @@ let convert_modbody ~loc ~version_option body =
               let version = Bin_prot.Std.bin_read_int ~pos_ref buf in
               let pos_ref = ref saved_pos in
               Array.find_map versions ~f:(fun (i, f) ->
-                  if Int.equal i version then Some (f buf ~pos_ref) else None )]
+                  if Int.equal i version then Some (f buf ~pos_ref) else None
+              )]
         in
         let convert_guard = [%stri let _ = bin_read_to_latest_opt] in
         convert_guard :: convert :: versions :: rev_str
@@ -752,10 +760,12 @@ let version_module_decl ~loc ~path:_ modname signature =
             if convertible then
               [%sig:
                 val versions :
-                  (int * (Core_kernel.Bigstring.t -> pos_ref:(int ref) -> Latest.t)) array
+                  ( int
+                  * (Core_kernel.Bigstring.t -> pos_ref:int ref -> Latest.t) )
+                  array
 
                 val bin_read_to_latest_opt :
-                  Bin_prot.Common.buf -> pos_ref:(int ref) -> Latest.t option]
+                  Bin_prot.Common.buf -> pos_ref:int ref -> Latest.t option]
             else []
           in
           (* insert Latest alias after latest version module decl
