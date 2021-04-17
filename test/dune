@@ -30,6 +30,13 @@
   (libraries core_kernel)
   (modules versioned_sig_good))
 
+;; layouts
+(executable
+ (name layouts_good)
+ (preprocess (pps ppx_jane ppx_deriving_yojson ppx_version))
+ (libraries core_kernel ppx_version.runtime)
+ (modules layouts_good))
+
 ;;; should fail
 
 ;; version syntax

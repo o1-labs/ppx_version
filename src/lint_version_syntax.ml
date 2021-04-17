@@ -24,28 +24,41 @@ let make_deriving_validator ~pred err_msg type_decl =
   let derivers =
     Ast_pattern.(attribute (string "deriving") (single_expr_payload __))
   in
-  match List.find_map type_decl.ptype_attributes
-            ~f:(fun attr -> parse_opt derivers Location.none attr (fun l -> Some l)) with
-    | Some derivers ->
+  match
+    List.find_map type_decl.ptype_attributes ~f:(fun attr ->
+        parse_opt derivers Location.none attr (fun l -> Some l) )
+  with
+  | Some derivers ->
       let derivers_loc = derivers.pexp_loc in
       let derivers =
-        match derivers.pexp_desc with Pexp_tuple derivers -> derivers | _ -> [derivers]
+        match derivers.pexp_desc with
+        | Pexp_tuple derivers ->
+            derivers
+        | _ ->
+            [derivers]
       in
-      let make_lident_pattern nm = Ast_pattern.(pexp_ident (lident (string nm))) in
+      let make_lident_pattern nm =
+        Ast_pattern.(pexp_ident (lident (string nm)))
+      in
       let version_pattern = make_lident_pattern "version" in
-      let version_with_arg_pattern = Ast_pattern.(pexp_apply (make_lident_pattern "version") __) in
+      let version_with_arg_pattern =
+        Ast_pattern.(pexp_apply (make_lident_pattern "version") __)
+      in
       let bin_io_pattern = make_lident_pattern "bin_io" in
-      let make_find_pattern handler pat = List.exists derivers ~f:(fun deriver ->
-          Option.is_some @@ parse_opt pat Location.none deriver handler)
+      let make_find_pattern handler pat =
+        List.exists derivers ~f:(fun deriver ->
+            Option.is_some @@ parse_opt pat Location.none deriver handler )
       in
       let find_pattern = make_find_pattern (Some ()) in
       let find_with_arg_pattern = make_find_pattern (fun _ -> Some ()) in
       let has_bin_io = find_pattern bin_io_pattern in
-      let has_version = find_pattern version_pattern
-                        || find_with_arg_pattern version_with_arg_pattern
+      let has_version =
+        find_pattern version_pattern
+        || find_with_arg_pattern version_with_arg_pattern
       in
       if pred has_bin_io has_version then [(derivers_loc, err_msg)] else []
-    | None -> []
+  | None ->
+      []
 
 let validate_neither_bin_io_nor_version =
   make_deriving_validator

@@ -4,9 +4,6 @@ open Versioned_util
 
 let no_toplevel_latest_type = ref false
 
-(* option to `deriving version' *)
-type version_option = No_version_option | Asserted | Binable
-
 (* TODO: Check if we need to optcomp this for 4.08 support. *)
 (*
 let create_attr ~loc attr_name attr_payload =
@@ -27,7 +24,7 @@ let rec add_deriving ~loc ~version_option attributes =
   in
   let version_expr =
     match version_option with
-    | No_version_option ->
+    | Version_option.Derived ->
         [%expr version]
     | Asserted ->
         [%expr version {asserted}]
@@ -39,7 +36,7 @@ let rec add_deriving ~loc ~version_option attributes =
       let attr_name = mk_loc ~loc "deriving" in
       let attr_payload =
         match version_option with
-        | No_version_option | Asserted ->
+        | Derived | Asserted ->
             payload [[%expr bin_io]; version_expr]
         | Binable ->
             payload [version_expr]
@@ -70,7 +67,7 @@ let rec add_deriving ~loc ~version_option attributes =
           in
           let needs_bin_io =
             match version_option with
-            | No_version_option | Asserted ->
+            | Derived | Asserted ->
                 true
             | Binable ->
                 false
@@ -184,7 +181,9 @@ let erase_stable_versions =
 
 let version_type ~version_option version stri =
   let loc = stri.pstr_loc in
-  let t, params =
+  let (module Ast_builder) = Ast_builder.make loc in
+  let open Ast_builder in
+  let t, t_layout_opt, params =
     let subst_type stri =
       (* NOTE: Can't use [Ast_pattern] here; it rejects attributes attached to
          types..
@@ -202,7 +201,31 @@ let version_type ~version_option version stri =
                   typ.ptype_attributes }
           in
           let t = {stri with pstr_desc= Pstr_type (rec_flag, [typ])} in
-          (t, params)
+          (* layout for the user-given type t *)
+          let t_layout_opt =
+            let manifest_attrs =
+              match typ.ptype_manifest with
+              | None ->
+                  []
+              | Some {ptyp_attributes; _} ->
+                  ptyp_attributes
+            in
+            match Gen_layout.layout_ident_opt_of_attributes manifest_attrs with
+            | Some lident ->
+                (* if there's a [@layout] on the type, use that *)
+                let layout_ref = {txt= lident; loc} in
+                Some [%stri let layout_t = [%e pexp_ident layout_ref]]
+            | None -> (
+              match version_option with
+              | Derived | Asserted ->
+                  let layout_expr =
+                    Gen_layout.generate_layout_expr ~version_option typ
+                  in
+                  Some [%stri let layout_t = [%e layout_expr]]
+              | Binable ->
+                  None )
+          in
+          (t, t_layout_opt, params)
       | _ ->
           (* TODO: Handle rpc types. *)
           Location.raise_errorf ~loc:stri.pstr_loc
@@ -218,7 +241,6 @@ let version_type ~version_option version stri =
         Location.raise_errorf ~loc:stri.pstr_loc
           "Expected a single public type t, or a module T."
   in
-  let (module Ast_builder) = Ast_builder.make loc in
   let with_version =
     let open Ast_builder in
     let typ =
@@ -255,6 +277,76 @@ let version_type ~version_option version stri =
          ~expr:
            (pmod_structure
               [pstr_type Recursive [typ]; pstr_type Recursive [t]; create]))
+  in
+  let get_type_decl type_name =
+    match with_version.pstr_desc with
+    | Pstr_module binding -> (
+      match binding.pmb_expr.pmod_desc with
+      | Pmod_structure str_items -> (
+        match
+          List.find_map str_items ~f:(fun str_item ->
+              match str_item.pstr_desc with
+              | Pstr_type (_rec_flag, [type_decl])
+                when String.equal type_decl.ptype_name.txt type_name ->
+                  Some type_decl
+              | _ ->
+                  None )
+        with
+        | Some type_decl ->
+            type_decl
+        | None ->
+            Location.raise_errorf ~loc:with_version.pstr_loc
+              "Cannot get type decl for layout, no type `%s` in module"
+              type_name )
+      | _ ->
+          (* unreachable *)
+          Location.raise_errorf ~loc:with_version.pstr_loc
+            "Cannot get type decl for layout, module does not contain a \
+             structure" )
+    | _ ->
+        (* unreachable *)
+        Location.raise_errorf ~loc:with_version.pstr_loc
+          "Cannot generate a layout, not a module binding"
+  in
+  let layouts =
+    match t_layout_opt with
+    | None ->
+        (* for Binable, no layout generated from the underlying type *)
+        []
+    | Some t_layout ->
+        (* layout_t is shadowed, so make it available via another name *)
+        let layout_for_testing = [%stri let layout_for_testing = layout_t] in
+        (* layout for `With_version.typ`, which is the same type as the user's `t` *)
+        let typ_layout =
+          let type_decl = get_type_decl "typ" in
+          let layout_expr =
+            Gen_layout.generate_layout_expr ~version_option type_decl
+          in
+          [%stri let layout_typ = [%e layout_expr]]
+        in
+        (* layout for `With_version.t`, a record which includes a version *)
+        let layout =
+          let type_decl = get_type_decl "t" in
+          let layout_expr =
+            Gen_layout.generate_layout_expr ~version ~version_option type_decl
+          in
+          [%stri let layout_t = [%e layout_expr]]
+        in
+        let layout_uses =
+          let mk_layout_ident s =
+            let open Ast_builder in
+            let name = Gen_layout.layout_name_of_type_name s in
+            let txt = Longident.Lident name in
+            pexp_ident {txt; loc}
+          in
+          let testing_layout_name = mk_layout_ident "for_testing" in
+          let typ_layout_name = mk_layout_ident "typ" in
+          let layout_name = mk_layout_ident "t" in
+          [%stri
+            let _ =
+              ([%e testing_layout_name], [%e typ_layout_name], [%e layout_name])]
+        in
+        [t_layout; layout_for_testing; typ_layout; layout; layout_uses]
   in
   let arg_names = List.mapi params ~f:(fun i _ -> sprintf "x%i" i) in
   let apply_args =
@@ -384,7 +476,7 @@ let version_type ~version_option version stri =
   in
   match stri.pstr_desc with
   | Pstr_type _ ->
-      (List.is_empty params, [t], with_version :: bin_io_shadows)
+      (List.is_empty params, [t], with_version :: (layouts @ bin_io_shadows))
   | Pstr_module
       ( {pmb_expr= {pmod_desc= Pmod_structure (stri :: str); _} as pmod; _} as
       pmb ) ->
@@ -395,9 +487,120 @@ let version_type ~version_option version stri =
                 { pmb with
                   pmb_expr= {pmod with pmod_desc= Pmod_structure (t :: str)} }
           } ]
-      , with_version :: bin_io_shadows )
+      , with_version :: (layouts @ bin_io_shadows) )
   | _ ->
       assert false
+
+type binable_layout_result =
+  {arg1: Longident.t option; layout: Longident.t option; stringable: bool}
+
+let add_binable_layout_if_needed ~loc type_stri str =
+  (* traverse the structure items, looking for any of:
+     - a use of Of_binable..., where the
+        first argument provides the serialization
+     - a use of Of_binable..., where a [@layout]
+        annotation provides the serialization
+     - a use of Of_stringable
+  *)
+  let binable_result =
+    List.find_map str ~f:(fun (stri : structure_item) ->
+        match stri.pstr_desc with
+        | Pstr_include {pincl_mod; _} -> (
+          match pincl_mod.pmod_desc with
+          | Pmod_apply
+              ( { pmod_desc=
+                    Pmod_apply
+                      ( { pmod_desc=
+                            Pmod_ident
+                              {txt= Ldot (Lident "Binable", of_binable); _}
+                        ; _ }
+                      , { pmod_desc= Pmod_ident {txt= arg1; _}
+                        ; pmod_attributes
+                        ; _ } )
+                ; _ }
+              , _arg2 )
+            when List.mem
+                   ["Of_binable"; "Of_binable1"; "Of_binable2"; "Of_binable3"]
+                   of_binable ~equal:String.equal -> (
+            match
+              Gen_layout.layout_ident_opt_of_attributes pmod_attributes
+            with
+            | Some layout_ident ->
+                Some {arg1= None; layout= Some layout_ident; stringable= false}
+            | None ->
+                Some {arg1= Some arg1; layout= None; stringable= false} )
+          | Pmod_apply
+              ( { pmod_desc=
+                    Pmod_ident
+                      {txt= Ldot (Lident "Binable", "Of_stringable"); _}
+                ; _ }
+              , _arg ) ->
+              Some {arg1= None; layout= None; stringable= true}
+          | _ ->
+              None )
+        | _ ->
+            None )
+  in
+  let (module Ast_builder) = Ast_builder.make loc in
+  let open Ast_builder in
+  match binable_result with
+  | None ->
+      (* for some uses of `%%versioned_binable`, like Bin_prot.Utils.Make_binable, too hard to derive
+       a layout; layouts are hand-written for those
+  *)
+      str
+  | Some {arg1= Some lident; layout= None; stringable= false} ->
+      (* lident is a module name, like Stable.V1 *)
+      let layout_name = Ldot (lident, "layout_t") in
+      let arg1_layout_expr = pexp_ident {txt= layout_name; loc} in
+      let bin_io_derived = {txt= Lident "bin_io_derived"; loc} in
+      let layout_stri =
+        [%stri
+          let layout_t =
+            [%e
+              pexp_record
+                [(bin_io_derived, ebool false)]
+                (Some arg1_layout_expr)]]
+      in
+      let use_layout_stri = [%stri let _ = layout_t] in
+      str @ [layout_stri; use_layout_stri]
+  | Some {arg1= None; layout= Some layout_ident; stringable= false} ->
+      let layout_stri =
+        [%stri let layout_t = [%e pexp_ident {txt= layout_ident; loc}]]
+      in
+      let use_layout_stri = [%stri let _ = layout_t] in
+      str @ [layout_stri; use_layout_stri]
+  | Some {arg1= None; layout= None; stringable= true} ->
+      let type_decl_string =
+        Pprintast.structure_item one_line_formatter type_stri ;
+        Format.pp_print_flush one_line_formatter () ;
+        one_line_contents ()
+      in
+      let type_name =
+        match type_stri.pstr_desc with
+        | Pstr_type (_, [{ptype_name= {txt; _}; _}]) ->
+            txt
+        | _ ->
+            Location.raise_errorf ~loc
+              "Expected structure item with a type declaration"
+      in
+      let rule_expr =
+        Gen_layout.bin_prot_rule_to_expr ~loc ~type_name
+          Ppx_version_runtime.Bin_prot_rule.String
+      in
+      let layout_stri =
+        [%stri
+          let layout_t =
+            { Ppx_version_runtime.Bin_prot_layout.layout_loc= __LOC__
+            ; version_opt= None
+            ; type_decl= [%e estring type_decl_string]
+            ; bin_io_derived= false
+            ; bin_prot_rule= [%e rule_expr] }]
+      in
+      let use_layout_stri = [%stri let _ = layout_t] in
+      str @ [layout_stri; use_layout_stri]
+  | _ ->
+      Location.raise_errorf "Internal error: incoherent binable result"
 
 let convert_module_stri ~version_option last_version stri =
   let module_pattern =
@@ -427,19 +630,33 @@ let convert_module_stri ~version_option last_version stri =
     | [] ->
         Location.raise_errorf ~loc:str.loc
           "Expected a type declaration in this structure."
-    | ({ pstr_desc=
-          Pstr_module
-            { pmb_name= {txt= "T"; _}
-            ; pmb_expr= {pmod_desc= Pmod_structure (type_stri :: _); _}
-            ; _ }
-      ; _ } as stri)
+    | ( { pstr_desc=
+            Pstr_module
+              { pmb_name= {txt= "T"; _}
+              ; pmb_expr= {pmod_desc= Pmod_structure (type_stri :: _); _}
+              ; _ }
+        ; _ } as stri )
       :: ( { pstr_desc=
                Pstr_include
                  {pincl_mod= {pmod_desc= Pmod_ident {txt= Lident "T"; _}; _}; _}
            ; _ }
            :: _ as str ) ->
+        let str =
+          match version_option with
+          | Version_option.Binable ->
+              add_binable_layout_if_needed ~loc type_stri str
+          | Asserted | Derived ->
+              str
+        in
         (stri, type_stri, str)
     | type_stri :: str ->
+        let str =
+          match version_option with
+          | Binable ->
+              add_binable_layout_if_needed ~loc type_stri str
+          | Asserted | Derived ->
+              str
+        in
         (type_stri, type_stri, str)
   in
   let should_convert, type_str, with_version_bin_io_shadows =
@@ -463,7 +680,7 @@ let convert_modbody ~loc ~version_option body =
   (* allow unconverted modules following versioned modules *)
   let body, unconverted =
     match version_option with
-    | No_version_option ->
+    | Version_option.Derived ->
         (body, [])
     | Asserted ->
         if List.is_empty body then (body, [])
@@ -624,7 +841,7 @@ let convert_module_type_signature_item {sigitems; parameterless_t; type_decl}
       , [ ( {ptype_name= {txt= "t"; loc}; ptype_attributes; ptype_params; _} as
           type_ ) ] ) ->
       let ptype_attributes' =
-        add_deriving ~loc ~version_option:No_version_option ptype_attributes
+        add_deriving ~loc ~version_option:Derived ptype_attributes
       in
       let psig_desc =
         Psig_type (recflag, [{type_ with ptype_attributes= ptype_attributes'}])
@@ -648,13 +865,27 @@ type module_type_with_convertible =
   ; extra_items: signature_item list }
 
 (* add deriving items to type t in module type *)
-let convert_module_type mod_ty =
+let convert_module_type ~loc mod_ty =
   match mod_ty.pmty_desc with
   | Pmty_signature signature ->
       let {sigitems; parameterless_t; type_decl} =
         convert_module_type_signature signature
       in
-      { module_type= {mod_ty with pmty_desc= Pmty_signature (List.rev sigitems)}
+      let layout_decl =
+        let open Ast_helper in
+        Sig.value
+          (Val.mk ~loc {txt= "layout_t"; loc}
+             (Typ.mk
+                (Ptyp_constr
+                   ( { txt=
+                         Longident.parse
+                           "Ppx_version_runtime.Bin_prot_layout.t"
+                     ; loc }
+                   , [] ))))
+      in
+      { module_type=
+          { mod_ty with
+            pmty_desc= Pmty_signature (List.rev (layout_decl :: sigitems)) }
       ; convertible= parameterless_t
       ; extra_items= Option.to_list type_decl }
   | _ ->
@@ -675,7 +906,7 @@ type module_accum =
   ; no_toplevel_latest: bool }
 
 (* convert modules Vn ... V1 contained in Stable *)
-let convert_module_decls ~loc:_ signature =
+let convert_module_decls ~loc signature =
   let init =
     { latest= None
     ; last= None
@@ -701,7 +932,7 @@ let convert_module_decls ~loc:_ signature =
         let in_latest = Option.is_none latest in
         let latest = if in_latest then Some pmd_name.txt else latest in
         let {module_type; convertible= module_convertible; extra_items} =
-          convert_module_type pmd_type
+          convert_module_type ~loc pmd_type
         in
         let psig_desc' = Psig_module {pmd with pmd_type= module_type} in
         let sigitem' = {sigitem with psig_desc= psig_desc'} in
@@ -804,7 +1035,7 @@ let () =
   let module_extension =
     Extension.(
       declare "versioned" Context.structure_item module_ast_pattern
-        (version_module ~version_option:No_version_option))
+        (version_module ~version_option:Derived))
   in
   let module_extension_asserted =
     Extension.(

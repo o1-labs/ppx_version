@@ -131,11 +131,6 @@ module Printing = struct
     let type_decl_no_attrs = type_decl_remove_internal_attributes type_decl in
     {type_decl_no_attrs with ptype_attributes}
 
-  (* convert type_decls to structure item so we can print it *)
-  let type_decls_to_stri type_decls =
-    (* type derivers only work with recursive types *)
-    {pstr_desc= Pstr_type (Ast.Recursive, type_decls); pstr_loc= Location.none}
-
   (* prints module_path:type_definition *)
   let print_type ~loc:_ ~path (_rec_flag, type_decls) _rpc _asserted _binable =
     let module_path = module_path_list path in
@@ -147,7 +142,7 @@ module Printing = struct
     let type_decls_filtered_attrs =
       List.map type_decls ~f:filter_type_decls_attrs
     in
-    let stri = type_decls_to_stri type_decls_filtered_attrs in
+    let stri = Versioned_util.type_decls_to_stri type_decls_filtered_attrs in
     Pprintast.structure_item Versioned_util.diff_formatter stri ;
     Format.pp_print_flush Versioned_util.diff_formatter () ;
     printf "\n%!" ;
@@ -248,6 +243,7 @@ module Deriving = struct
     ; "int"
     ; "int32"
     ; "int64"
+    ; "nativeint"
     ; "float"
     ; "char"
     ; "string"
