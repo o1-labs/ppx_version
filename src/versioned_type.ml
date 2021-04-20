@@ -529,7 +529,7 @@ module Deriving = struct
         generate_version_number_decl inner3_modules loc generation_kind
         @ versioned_decls
     in
-    let layout_opt =
+    let layouts_opt =
       let manifest_attrs =
         match type_decl.ptype_manifest with
         | None ->
@@ -541,25 +541,31 @@ module Deriving = struct
         let loc = type_decl.ptype_loc
       end) in
       let open E in
+      let layout_name = Gen_layout.layout_name_of_type_name type_decl.ptype_name.txt in
+      let layout_pat = pvar layout_name in
+      let layout_for_testing_pat = pvar (layout_name ^ "_for_testing") in
+      let layout_id = pexp_ident (Located.mk (Lident layout_name)) in
       match Gen_layout.layout_ident_opt_of_attributes manifest_attrs with
       | Some lident ->
           (* if there's a [@layout] on the type, use that *)
           let layout_ref = {txt= lident; loc} in
-          Some [%stri let layout_t = [%e pexp_ident layout_ref]]
+          Some [[%stri let [%p layout_pat] = [%e pexp_ident layout_ref]];
+                [%stri let [%p layout_for_testing_pat] = [%e layout_id]]]
       | None -> (
         match version_option with
         | Binable ->
             None
         | Asserted | Derived ->
-            let layout_expr =
-              Gen_layout.generate_layout_expr ~version_option type_decl
-            in
-            Some [%stri let layout_t = [%e layout_expr]] )
+          let layout_expr =
+            Gen_layout.generate_layout_expr ~version_option type_decl
+          in
+          (* layout_t will be shadowed, so make it available via another name *)
+          Some [[%stri let [%p layout_pat] = [%e layout_expr]]
+               ;[%stri let [%p layout_for_testing_pat] = [%e layout_id]]]
+      )
     in
-    Option.value_map layout_opt ~default:decls ~f:(fun layout_t ->
-        (* layout_t will be shadowed, so make it available via another name *)
-        let layout_for_testing = [%stri let layout_for_testing = layout_t] in
-        decls @ [layout_t; layout_for_testing] )
+    Option.value_map layouts_opt ~default:decls ~f:(fun layouts ->
+        decls @ layouts)
 
   let generate_val_decls_for_type_decl ~loc type_decl =
     match type_decl.ptype_kind with

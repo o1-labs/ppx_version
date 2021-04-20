@@ -18,7 +18,7 @@ module M1 = struct
 
   let expected = Int
 
-  let _ = assert (Stable.Latest.layout_for_testing.bin_prot_rule = expected)
+  let _ = assert (Stable.Latest.layout_t_for_testing.bin_prot_rule = expected)
 end
 
 module M2 = struct
@@ -35,7 +35,7 @@ module M2 = struct
 
   let expected = Char
 
-  let _ = assert (Stable.Latest.layout_for_testing.bin_prot_rule = expected)
+  let _ = assert (Stable.Latest.layout_t_for_testing.bin_prot_rule = expected)
 end
 
 module M3 = struct
@@ -55,7 +55,7 @@ module M3 = struct
       [ {field_name= "x"; field_rule= Int}
       ; {field_name= "y"; field_rule= String} ]
 
-  let _ = assert (Stable.Latest.layout_for_testing.bin_prot_rule = expected)
+  let _ = assert (Stable.Latest.layout_t_for_testing.bin_prot_rule = expected)
 end
 
 module M4 = struct
@@ -75,7 +75,7 @@ module M4 = struct
       [ {ctor_name= "Foo"; index= 0; ctor_args= [String]}
       ; {ctor_name= "Bar"; index= 1; ctor_args= []} ]
 
-  let _ = assert (Stable.Latest.layout_for_testing.bin_prot_rule = expected)
+  let _ = assert (Stable.Latest.layout_t_for_testing.bin_prot_rule = expected)
 end
 
 module M5 = struct
@@ -99,7 +99,7 @@ module M5 = struct
             ; index= 1
             ; ctor_args= [Self_reference [Type_var "b"; Type_var "a"]] } ] )
 
-  let _ = assert (Stable.Latest.layout_for_testing.bin_prot_rule = expected)
+  let _ = assert (Stable.Latest.layout_t_for_testing.bin_prot_rule = expected)
 end
 
 module M6 = struct
@@ -148,7 +148,7 @@ module M6 = struct
                                                        ; Type_var "a" ] ] } ]
                                          ) }) }) } ] })
 
-  let _ = assert (Stable.Latest.layout_for_testing.bin_prot_rule = expected)
+  let _ = assert (Stable.Latest.layout_t_for_testing.bin_prot_rule = expected)
 end
 
 module M7 = struct
@@ -165,7 +165,7 @@ module M7 = struct
 
   let expected = Type_abstraction (["a"], List (Type_var "a"))
 
-  let _ = assert (Stable.Latest.layout_for_testing.bin_prot_rule = expected)
+  let _ = assert (Stable.Latest.layout_t_for_testing.bin_prot_rule = expected)
 end
 
 module M8 = struct
@@ -185,7 +185,7 @@ module M8 = struct
       [ Tagged {polyvar_name= "A"; hash= 65; polyvar_args= [Int]}
       ; Tagged {polyvar_name= "B"; hash= 66; polyvar_args= [String]} ]
 
-  let _ = assert (Stable.Latest.layout_for_testing.bin_prot_rule = expected)
+  let _ = assert (Stable.Latest.layout_t_for_testing.bin_prot_rule = expected)
 end
 
 module M9 = struct
@@ -207,7 +207,7 @@ module M9 = struct
           [ Tagged {polyvar_name= "A"; hash= 65; polyvar_args= [Type_var "a"]}
           ; Tagged {polyvar_name= "B"; hash= 66; polyvar_args= [String]} ] )
 
-  let _ = assert (Stable.Latest.layout_for_testing.bin_prot_rule = expected)
+  let _ = assert (Stable.Latest.layout_t_for_testing.bin_prot_rule = expected)
 end
 
 module M10 = struct
@@ -224,7 +224,7 @@ module M10 = struct
 
   let expected = Tuple [Int; String; Unit]
 
-  let _ = assert (Stable.Latest.layout_for_testing.bin_prot_rule = expected)
+  let _ = assert (Stable.Latest.layout_t_for_testing.bin_prot_rule = expected)
 end
 
 module M11 = struct
@@ -242,7 +242,7 @@ module M11 = struct
   let expected =
     Type_abstraction (["a"; "b"], Tuple [Type_var "a"; Type_var "b"; Float])
 
-  let _ = assert (Stable.Latest.layout_for_testing.bin_prot_rule = expected)
+  let _ = assert (Stable.Latest.layout_t_for_testing.bin_prot_rule = expected)
 end
 
 module M12 = struct
@@ -259,7 +259,7 @@ module M12 = struct
 
   let expected = Option Int64
 
-  let _ = assert (Stable.Latest.layout_for_testing.bin_prot_rule = expected)
+  let _ = assert (Stable.Latest.layout_t_for_testing.bin_prot_rule = expected)
 end
 
 module M13 = struct
@@ -276,7 +276,7 @@ module M13 = struct
 
   let expected = List Native_int
 
-  let _ = assert (Stable.Latest.layout_for_testing.bin_prot_rule = expected)
+  let _ = assert (Stable.Latest.layout_t_for_testing.bin_prot_rule = expected)
 end
 
 module M14 = struct
@@ -296,7 +296,7 @@ module M14 = struct
 
   let expected = Hashtable {key_rule= String; value_rule= Int}
 
-  let _ = assert (Stable.Latest.layout_for_testing.bin_prot_rule = expected)
+  let _ = assert (Stable.Latest.layout_t_for_testing.bin_prot_rule = expected)
 end
 
 let float_layout =
@@ -319,7 +319,7 @@ module M15 = struct
 
   let expected = float_layout.bin_prot_rule
 
-  let _ = assert (Stable.Latest.layout_for_testing.bin_prot_rule = expected)
+  let _ = assert (Stable.Latest.layout_t_for_testing.bin_prot_rule = expected)
 end
 
 module M16 = struct
@@ -345,7 +345,7 @@ module M16 = struct
                  { source_type_decl= float_layout.type_decl
                  ; ref_rule= float_layout.bin_prot_rule }) } ]
 
-  let _ = assert (Stable.Latest.layout_for_testing.bin_prot_rule = expected)
+  let _ = assert (Stable.Latest.layout_t_for_testing.bin_prot_rule = expected)
 end
 
 module M17 = struct
