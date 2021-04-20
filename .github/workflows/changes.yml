@@ -1,0 +1,21 @@
+name: changes
+
+on: [pull_request, push]
+
+jobs:
+  run_changes:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v2
+
+      - name: Set up ocaml
+        uses: avsm/setup-ocaml@v1
+        with:
+          ocaml-version: 4.12.0
+
+      - name: Compare opam and dune files
+        run: |
+          opam-dune-lint
+          
