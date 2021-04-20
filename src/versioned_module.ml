@@ -183,7 +183,7 @@ let version_type ~version_option version stri =
   let loc = stri.pstr_loc in
   let (module Ast_builder) = Ast_builder.make loc in
   let open Ast_builder in
-  let t, t_layout_opt, params =
+  let t, params =
     let subst_type stri =
       (* NOTE: Can't use [Ast_pattern] here; it rejects attributes attached to
          types..
@@ -201,31 +201,7 @@ let version_type ~version_option version stri =
                   typ.ptype_attributes }
           in
           let t = {stri with pstr_desc= Pstr_type (rec_flag, [typ])} in
-          (* layout for the user-given type t *)
-          let t_layout_opt =
-            let manifest_attrs =
-              match typ.ptype_manifest with
-              | None ->
-                  []
-              | Some {ptyp_attributes; _} ->
-                  ptyp_attributes
-            in
-            match Gen_layout.layout_ident_opt_of_attributes manifest_attrs with
-            | Some lident ->
-                (* if there's a [@layout] on the type, use that *)
-                let layout_ref = {txt= lident; loc} in
-                Some [%stri let layout_t = [%e pexp_ident layout_ref]]
-            | None -> (
-              match version_option with
-              | Derived | Asserted ->
-                  let layout_expr =
-                    Gen_layout.generate_layout_expr ~version_option typ
-                  in
-                  Some [%stri let layout_t = [%e layout_expr]]
-              | Binable ->
-                  None )
-          in
-          (t, t_layout_opt, params)
+          (t, params)
       | _ ->
           (* TODO: Handle rpc types. *)
           Location.raise_errorf ~loc:stri.pstr_loc
@@ -309,44 +285,34 @@ let version_type ~version_option version stri =
           "Cannot generate a layout, not a module binding"
   in
   let layouts =
-    match t_layout_opt with
-    | None ->
-        (* for Binable, no layout generated from the underlying type *)
-        []
-    | Some t_layout ->
-        (* layout_t is shadowed, so make it available via another name *)
-        let layout_for_testing = [%stri let layout_for_testing = layout_t] in
-        (* layout for `With_version.typ`, which is the same type as the user's `t` *)
-        let typ_layout =
-          let type_decl = get_type_decl "typ" in
-          let layout_expr =
-            Gen_layout.generate_layout_expr ~version_option type_decl
-          in
-          [%stri let layout_typ = [%e layout_expr]]
-        in
-        (* layout for `With_version.t`, a record which includes a version *)
-        let layout =
-          let type_decl = get_type_decl "t" in
-          let layout_expr =
-            Gen_layout.generate_layout_expr ~version ~version_option type_decl
-          in
-          [%stri let layout_t = [%e layout_expr]]
-        in
-        let layout_uses =
-          let mk_layout_ident s =
-            let open Ast_builder in
-            let name = Gen_layout.layout_name_of_type_name s in
-            let txt = Longident.Lident name in
-            pexp_ident {txt; loc}
-          in
-          let testing_layout_name = mk_layout_ident "for_testing" in
-          let typ_layout_name = mk_layout_ident "typ" in
-          let layout_name = mk_layout_ident "t" in
-          [%stri
-            let _ =
-              ([%e testing_layout_name], [%e typ_layout_name], [%e layout_name])]
-        in
-        [t_layout; layout_for_testing; typ_layout; layout; layout_uses]
+    (* layout for `With_version.typ`, which is the same type as the user's `t` *)
+    let typ_layout =
+      let type_decl = get_type_decl "typ" in
+      let layout_expr =
+        Gen_layout.generate_layout_expr ~version_option type_decl
+      in
+      [%stri let layout_typ = [%e layout_expr]]
+    in
+    (* layout for `With_version.t`, a record which includes a version *)
+    let layout =
+      let type_decl = get_type_decl "t" in
+      let layout_expr =
+        Gen_layout.generate_layout_expr ~version ~version_option type_decl
+      in
+      [%stri let layout_t = [%e layout_expr]]
+    in
+    let layout_uses =
+      let mk_layout_ident s =
+        let open Ast_builder in
+        let name = Gen_layout.layout_name_of_type_name s in
+        let txt = Longident.Lident name in
+        pexp_ident {txt; loc}
+      in
+      let typ_layout_name = mk_layout_ident "typ" in
+      let layout_name = mk_layout_ident "t" in
+      [%stri let _ = ([%e typ_layout_name], [%e layout_name])]
+    in
+    [typ_layout; layout; layout_uses]
   in
   let arg_names = List.mapi params ~f:(fun i _ -> sprintf "x%i" i) in
   let apply_args =

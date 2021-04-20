@@ -323,7 +323,10 @@ let rec bin_prot_rule_to_expr ~loc ~type_name rule =
           Ppx_version_runtime.Bin_prot_rule.Type_abstraction
             ([%e elist type_var_exprs], [%e bin_prot_rule_expr])]
     | Type_closure (bindings, bin_prot_rule) ->
-        let bindings_exprs = List.map bindings ~f:(fun (var,rule) -> pexp_tuple [estring var;go rule]) in
+        let bindings_exprs =
+          List.map bindings ~f:(fun (var, rule) ->
+              pexp_tuple [estring var; go rule] )
+        in
         let bin_prot_rule_expr = go bin_prot_rule in
         [%expr
           Ppx_version_runtime.Bin_prot_rule.Type_closure
