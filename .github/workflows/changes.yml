@@ -1,0 +1,40 @@
+name: check build
+
+on: [pull_request, push]
+
+jobs:
+  run_dune_build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v2
+
+      - name: Set up ocaml 4.07.1
+        uses: avsm/setup-ocaml@v1
+        with:
+          ocaml-version: 4.07.1
+
+      - name: Make sure we can build
+        run: |
+          opam install dune ppxlib ppx_bin_prot core_kernel
+          eval $(opam env)
+          dune build -p ppx_version
+
+  run_opam_pin:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v2
+
+      - name: Set up ocaml 4.07.1
+        uses: avsm/setup-ocaml@v1
+        with:
+          ocaml-version: 4.07.1
+
+      - name: Make sure we can opam pin
+        run: |
+          opam pin add ppx_version .
+
+  
