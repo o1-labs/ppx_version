@@ -21,3 +21,12 @@ type t =
   ; bin_io_derived: bool
   ; bin_prot_rule: Bin_prot_rule.t }
 [@@deriving sexp_of, to_yojson]
+
+let register_layout =
+  let layouts_tbl = String.Table.create ()
+  in
+  (fun layout ->
+     match String.Table.add layouts_tbl ~key:layout.layout_loc ~data:layout with
+     | `Ok -> ()
+     | `Duplicate ->
+       failwith "Registered duplicate layout")

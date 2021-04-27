@@ -541,7 +541,9 @@ module Deriving = struct
         let loc = type_decl.ptype_loc
       end) in
       let open E in
-      let layout_name = Gen_layout.layout_name_of_type_name type_decl.ptype_name.txt in
+      let layout_name =
+        Gen_layout.layout_name_of_type_name type_decl.ptype_name.txt
+      in
       let layout_pat = pvar layout_name in
       let layout_for_testing_pat = pvar (layout_name ^ "_for_testing") in
       let layout_id = pexp_ident (Located.mk (Lident layout_name)) in
@@ -549,23 +551,33 @@ module Deriving = struct
       | Some lident ->
           (* if there's a [@layout] on the type, use that *)
           let layout_ref = {txt= lident; loc} in
-          Some [[%stri let [%p layout_pat] = [%e pexp_ident layout_ref]];
-                [%stri let [%p layout_for_testing_pat] = [%e layout_id]]]
+          Some
+            [ [%stri let [%p layout_pat] = [%e pexp_ident layout_ref]]
+            ; [%stri let [%p layout_for_testing_pat] = [%e layout_id]] ]
       | None -> (
         match version_option with
         | Binable ->
             None
         | Asserted | Derived ->
-          let layout_expr =
-            Gen_layout.generate_layout_expr ~version_option type_decl
-          in
-          (* layout_t will be shadowed, so make it available via another name *)
-          Some [[%stri let [%p layout_pat] = [%e layout_expr]]
-               ;[%stri let [%p layout_for_testing_pat] = [%e layout_id]]]
-      )
+            let layout_expr =
+              Gen_layout.generate_layout_expr ~version_option type_decl
+            in
+            let layout_decl = [%stri let [%p layout_pat] = [%e layout_expr]] in
+            (* layout_t will be shadowed, so make it available via another name *)
+            let layout_for_testing_decl =
+              [%stri let [%p layout_for_testing_pat] = [%e layout_id]]
+            in
+            if rpc then
+              let layout_register_decl =
+                [%stri
+                  let () =
+                    Ppx_version_runtime.Bin_prot_layout.register_layout [%e layout_id]]
+              in
+              Some [layout_decl; layout_for_testing_decl; layout_register_decl]
+            else Some [layout_decl; layout_for_testing_decl] )
     in
     Option.value_map layouts_opt ~default:decls ~f:(fun layouts ->
-        decls @ layouts)
+        decls @ layouts )
 
   let generate_val_decls_for_type_decl ~loc type_decl =
     match type_decl.ptype_kind with

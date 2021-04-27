@@ -299,7 +299,8 @@ let rec bin_prot_rule_to_expr ~loc ~type_name rule =
             Ppx_version_runtime.Bin_prot_rule.Reference
               (Ppx_version_runtime.Bin_prot_rule.Resolved
                  { source_type_decl= [%e pexp_field layout_expr type_decl_field]
-                 ; bin_io_derived = [%e pexp_field layout_expr bin_io_derived_field]
+                 ; bin_io_derived=
+                     [%e pexp_field layout_expr bin_io_derived_field]
                  ; ref_rule=
                      Ppx_version_runtime.Bin_prot_rule.subst_unresolved_params
                        ~module_:__MODULE__ ~loc:__LOC__ [%e unresolveds_expr]
