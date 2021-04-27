@@ -84,7 +84,7 @@ and polyvar = Tagged of tagged | Inherited of t
 
 and unresolved = {params: t list; layout_id: longident}
 
-and resolved = {source_type_decl: string; ref_rule: t}
+and resolved = {source_type_decl: string; bin_io_derived: bool; ref_rule: t}
 
 and rule_ref = Unresolved of unresolved | Resolved of resolved
 [@@deriving sexp_of, to_yojson]
