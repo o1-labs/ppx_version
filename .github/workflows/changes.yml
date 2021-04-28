@@ -36,5 +36,3 @@ jobs:
       - name: Make sure we can opam pin
         run: |
           opam pin add ppx_version .
-
-  
