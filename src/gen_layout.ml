@@ -37,6 +37,8 @@ let is_native_int_type = mk_is_type "nativeint" "Nativeint"
 
 let is_float_type = mk_is_type "float" "Float"
 
+let is_bytes_type = mk_is_type "bytes" "Bytes"
+
 let is_string_type = mk_is_type "string" "String"
 
 let is_char_type = mk_is_type "char" "Char"
@@ -100,7 +102,7 @@ let bin_prot_rule_of_core_type ~loc ~type_name core_type =
           Float
       | Ptyp_constr ({txt; _}, []) when is_bool_type txt ->
           Bool
-      | Ptyp_constr ({txt; _}, []) when is_string_type txt ->
+      | Ptyp_constr ({txt; _}, []) when is_string_type txt || is_bytes_type txt ->
           String
       | Ptyp_constr ({txt; _}, []) when is_char_type txt ->
           Char
