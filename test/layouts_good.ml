@@ -119,6 +119,7 @@ module M6 = struct
       (Resolved
          { source_type_decl=
              "type ('a, 'b) t = { version: int ; t: ('a, 'b) typ }"
+         ; bin_io_derived = true
          ; ref_rule=
              Record
                [ {field_name= "version"; field_rule= Int}
@@ -127,12 +128,14 @@ module M6 = struct
                      Reference
                        (Resolved
                           { source_type_decl= "type ('a, 'b) typ = ('a, 'b) t"
+                          ; bin_io_derived = true
                           ; ref_rule=
                               Reference
                                 (Resolved
                                    { source_type_decl=
                                        "type ('a, 'b) t = | Nil  | Cons of \
                                         ('b, 'a) t "
+                                   ; bin_io_derived = true
                                    ; ref_rule=
                                        Type_closure
                                          ( [("a", Int); ("b", String)]
@@ -343,6 +346,7 @@ module M16 = struct
             Reference
               (Resolved
                  { source_type_decl= float_layout.type_decl
+                 ; bin_io_derived = false
                  ; ref_rule= float_layout.bin_prot_rule }) } ]
 
   let _ = assert (Stable.Latest.layout_t_for_testing.bin_prot_rule = expected)
@@ -372,10 +376,12 @@ module M17 = struct
             Reference
               (Resolved
                  { source_type_decl= "type typ = t"
+                 ; bin_io_derived = false
                  ; ref_rule=
                      Reference
                        (Resolved
                           { source_type_decl= "type t = string"
+                          ; bin_io_derived = false
                           ; ref_rule= String }) }) } ]
 
   let _ = assert (Stable.Latest.layout_t.bin_prot_rule = expected)

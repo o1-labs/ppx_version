@@ -29,6 +29,10 @@ positive-tests :
 	@ echo -n "Module signature versioning, should succeed..."
 	@ dune exec ./versioned_sig_good.exe ${REDIRECT}
 	@ echo "OK"
+# layouts
+	@ echo -n "Layouts, should succeed..."
+	@ dune exec ./layouts_good.exe ${REDIRECT}
+	@ echo "OK"
 
 negative-tests :
 # version syntax
