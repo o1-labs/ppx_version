@@ -505,7 +505,6 @@ module Deriving = struct
     (* binable is synonym for asserted,
        in the sense that we don't require the type to be versioned
     *)
-    let version_option = Version_option.of_flags ~asserted ~binable in
     let type_decl = get_type_decl_representative type_decls in
     if (asserted || binable) && rpc then
       Location.raise_errorf ~loc:type_decl.ptype_loc
@@ -519,65 +518,14 @@ module Deriving = struct
         type_decl
     in
     let type_name = type_decl.ptype_name.txt in
-    let decls =
-      (* generate version number for Rpc response, but not for query, so we
-         don't get an unused value
-      *)
-      if generation_kind = Rpc && String.equal type_name "query" then
-        versioned_decls
-      else
-        generate_version_number_decl inner3_modules loc generation_kind
-        @ versioned_decls
-    in
-    let layouts_opt =
-      let manifest_attrs =
-        match type_decl.ptype_manifest with
-        | None ->
-            []
-        | Some {ptyp_attributes; _} ->
-            ptyp_attributes
-      in
-      let module E = Ppxlib.Ast_builder.Make (struct
-        let loc = type_decl.ptype_loc
-      end) in
-      let open E in
-      let layout_name =
-        Gen_layout.layout_name_of_type_name type_decl.ptype_name.txt
-      in
-      let layout_pat = pvar layout_name in
-      let layout_for_testing_pat = pvar (layout_name ^ "_for_testing") in
-      let layout_id = pexp_ident (Located.mk (Lident layout_name)) in
-      match Gen_layout.layout_ident_opt_of_attributes manifest_attrs with
-      | Some lident ->
-          (* if there's a [@layout] on the type, use that *)
-          let layout_ref = {txt= lident; loc} in
-          Some
-            [ [%stri let [%p layout_pat] = [%e pexp_ident layout_ref]]
-            ; [%stri let [%p layout_for_testing_pat] = [%e layout_id]] ]
-      | None -> (
-        match version_option with
-        | Binable ->
-            None
-        | Asserted | Derived ->
-            let layout_expr =
-              Gen_layout.generate_layout_expr ~version_option type_decl
-            in
-            let layout_decl = [%stri let [%p layout_pat] = [%e layout_expr]] in
-            (* layout_t will be shadowed, so make it available via another name *)
-            let layout_for_testing_decl =
-              [%stri let [%p layout_for_testing_pat] = [%e layout_id]]
-            in
-            if rpc then
-              let layout_register_decl =
-                [%stri
-                  let () =
-                    Ppx_version_runtime.Bin_prot_layout.register_layout [%e layout_id]]
-              in
-              Some [layout_decl; layout_for_testing_decl; layout_register_decl]
-            else Some [layout_decl; layout_for_testing_decl] )
-    in
-    Option.value_map layouts_opt ~default:decls ~f:(fun layouts ->
-        decls @ layouts )
+    (* generate version number for Rpc response, but not for query, so we
+       don't get an unused value
+    *)
+    if generation_kind = Rpc && String.equal type_name "query" then
+      versioned_decls
+    else
+      generate_version_number_decl inner3_modules loc generation_kind
+      @ versioned_decls
 
   let generate_val_decls_for_type_decl ~loc type_decl =
     match type_decl.ptype_kind with

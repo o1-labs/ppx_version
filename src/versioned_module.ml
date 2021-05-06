@@ -289,22 +289,22 @@ let version_type ~version_option version stri =
     let typ_layout =
       let type_decl = get_type_decl "typ" in
       let layout_expr =
-        Gen_layout.generate_layout_expr ~version_option type_decl
+        Ppx_bin_prot_layout.Generate.generate_layout_expr type_decl
       in
-      [%stri let layout_typ = [%e layout_expr]]
+      [%stri let bin_layout_typ = [%e layout_expr]]
     in
     (* layout for `With_version.t`, a record which includes a version *)
     let layout =
       let type_decl = get_type_decl "t" in
       let layout_expr =
-        Gen_layout.generate_layout_expr ~version ~version_option type_decl
+        Ppx_bin_prot_layout.Generate.generate_layout_expr ~version type_decl
       in
-      [%stri let layout_t = [%e layout_expr]]
+      [%stri let bin_layout_t = [%e layout_expr]]
     in
     let layout_uses =
       let mk_layout_ident s =
         let open Ast_builder in
-        let name = Gen_layout.layout_name_of_type_name s in
+        let name = Ppx_bin_prot_layout.Generate.layout_name_of_type_name s in
         let txt = Longident.Lident name in
         pexp_ident {txt; loc}
       in
@@ -489,7 +489,7 @@ let add_binable_layout_if_needed ~loc type_stri str =
                    ["Of_binable"; "Of_binable1"; "Of_binable2"; "Of_binable3"]
                    of_binable ~equal:String.equal -> (
             match
-              Gen_layout.layout_ident_opt_of_attributes pmod_attributes
+              Ppx_bin_prot_layout.Generate.layout_ident_opt_of_attributes pmod_attributes
             with
             | Some layout_ident ->
                 Some {arg1= None; layout= Some layout_ident; stringable= false}
@@ -517,24 +517,24 @@ let add_binable_layout_if_needed ~loc type_stri str =
       str
   | Some {arg1= Some lident; layout= None; stringable= false} ->
       (* lident is a module name, like Stable.V1 *)
-      let layout_name = Ldot (lident, "layout_t") in
+      let layout_name = Ldot (lident, "bin_layout_t") in
       let arg1_layout_expr = pexp_ident {txt= layout_name; loc} in
       let bin_io_derived = {txt= Lident "bin_io_derived"; loc} in
       let layout_stri =
         [%stri
-          let layout_t =
+          let bin_layout_t =
             [%e
               pexp_record
                 [(bin_io_derived, ebool false)]
                 (Some arg1_layout_expr)]]
       in
-      let use_layout_stri = [%stri let _ = layout_t] in
+      let use_layout_stri = [%stri let _ = bin_layout_t] in
       str @ [layout_stri; use_layout_stri]
   | Some {arg1= None; layout= Some layout_ident; stringable= false} ->
       let layout_stri =
-        [%stri let layout_t = [%e pexp_ident {txt= layout_ident; loc}]]
+        [%stri let bin_layout_t = [%e pexp_ident {txt= layout_ident; loc}]]
       in
-      let use_layout_stri = [%stri let _ = layout_t] in
+      let use_layout_stri = [%stri let _ = bin_layout_t] in
       str @ [layout_stri; use_layout_stri]
   | Some {arg1= None; layout= None; stringable= true} ->
       let type_decl_string =
@@ -551,19 +551,19 @@ let add_binable_layout_if_needed ~loc type_stri str =
               "Expected structure item with a type declaration"
       in
       let rule_expr =
-        Gen_layout.bin_prot_rule_to_expr ~loc ~type_name
-          Ppx_version_runtime.Bin_prot_rule.String
+        Ppx_bin_prot_layout.Generate.bin_prot_rule_to_expr ~loc ~type_name
+          Ppx_bin_prot_layout.Bin_prot_rule.String
       in
       let layout_stri =
         [%stri
-          let layout_t =
-            { Ppx_version_runtime.Bin_prot_layout.layout_loc= __LOC__
+          let bin_layout_t =
+            { Ppx_bin_prot_layout.Bin_prot_layout.layout_loc= __LOC__
             ; version_opt= None
             ; type_decl= [%e estring type_decl_string]
             ; bin_io_derived= false
             ; bin_prot_rule= [%e rule_expr] }]
       in
-      let use_layout_stri = [%stri let _ = layout_t] in
+      let use_layout_stri = [%stri let _ = bin_layout_t] in
       str @ [layout_stri; use_layout_stri]
   | _ ->
       Location.raise_errorf "Internal error: incoherent binable result"
@@ -840,12 +840,12 @@ let convert_module_type ~loc mod_ty =
       let layout_decl =
         let open Ast_helper in
         Sig.value
-          (Val.mk ~loc {txt= "layout_t"; loc}
+          (Val.mk ~loc {txt= "bin_layout_t"; loc}
              (Typ.mk
                 (Ptyp_constr
                    ( { txt=
                          Longident.parse
-                           "Ppx_version_runtime.Bin_prot_layout.t"
+                           "Ppx_bin_prot_layout.Bin_prot_layout.t"
                      ; loc }
                    , [] ))))
       in
