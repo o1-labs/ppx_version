@@ -15,6 +15,8 @@ depends: [
   "ocaml" {<= "4.07.1"}
   "ppxlib"
   "ppx_bin_prot"
+  "ppx_deriving_yojson"
+  "ppx_sexp_conv"
   "core_kernel" {< "v0.13"}
   "dune" {>= "2.5"}
 ]

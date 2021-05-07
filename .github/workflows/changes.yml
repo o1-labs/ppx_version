@@ -17,7 +17,7 @@ jobs:
 
       - name: Make sure we can build
         run: |
-          opam install dune ppxlib ppx_bin_prot core_kernel
+          opam install dune ppxlib ppx_bin_prot  ppx_deriving_yojson ppx_sexp_conv core_kernel
           eval $(opam env)
           dune build -p ppx_version
 
