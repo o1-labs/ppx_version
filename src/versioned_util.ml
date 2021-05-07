@@ -5,22 +5,25 @@ open Ppxlib
 
 let parse_opt = Ast_pattern.parse ~on_error:(fun () -> None)
 
-let mk_loc ~loc txt = {Location.loc; txt}
+let mk_loc ~loc txt = { Location.loc; txt }
 
-let map_loc ~f {Location.loc; txt} = {Location.loc; txt= f txt}
+let map_loc ~f { Location.loc; txt } = { Location.loc; txt = f txt }
 
-let check_modname ~loc name =
-  if name = "Stable" then name
-  else
-    Location.raise_errorf ~loc
-      "Expected a module named Stable, but got a module named %s." name
+let check_modname ~loc name : string =
+  match name with
+  | "Stable" -> name
+  | _ ->
+      Location.raise_errorf ~loc
+        "Expected a module named Stable, but got a module named %s." name
 
 let make_one_line_formatter formatter =
   let out_funs = Format.(pp_get_formatter_out_functions formatter ()) in
   let out_funs' =
-    { out_funs with
-      out_newline= (fun () -> out_funs.out_spaces 1)
-    ; out_indent= (fun _ -> ()) }
+    {
+      out_funs with
+      out_newline = (fun () -> out_funs.out_spaces 1);
+      out_indent = (fun _ -> ());
+    }
   in
   Format.formatter_of_out_functions out_funs'
 
@@ -51,7 +54,7 @@ let validate_module_version module_version loc =
           Location.raise_errorf ~loc
             "Versioning module name must be Vn, for some positive number n, \
              got: \"%s\""
-            module_version ) ;
+            module_version);
     (* invariant: 0th char is digit *)
     if Int.equal (Char.get_digit_exn numeric_part.[0]) 0 then
       Location.raise_errorf ~loc
@@ -76,6 +79,7 @@ let type_decls_to_stri type_decls =
 
        add to this list as needed; but more items slows things down
  *)
-let jane_street_library_modules = ["Uuid"]
+let jane_street_library_modules = [ "Uuid" ]
 
-let jane_street_modules = ["Core"; "Core_kernel"] @ jane_street_library_modules
+let jane_street_modules =
+  [ "Core"; "Core_kernel" ] @ jane_street_library_modules
