@@ -1,34 +1,47 @@
 ;;; each library below has an identical preprocess clause, because of this
 ;;; dune bug: https://github.com/ocaml/dune/issues/1946
 
+(library
+  (name layouts)
+  (preprocess (pps ppx_jane ppx_deriving_yojson ppx_version))
+  (libraries core_kernel ppx_version.runtime)
+  (modules layouts))
+
 ;;; should succeed
 
 ;; version syntax
 (library
   (name good_version_syntax)
   (preprocess (pps ppx_jane ppx_deriving_yojson ppx_version))
-  (libraries core_kernel)
+  (libraries core_kernel layouts)
   (modules good_version_syntax))
 
 ;; versioning
 (library
   (name versioned_good)
   (preprocess (pps ppx_jane ppx_deriving_yojson ppx_version))
-  (libraries core_kernel)
+  (libraries core_kernel layouts)
   (modules versioned_good))
 
 ;; module versioning
 (executable
   (name versioned_module_good)
   (preprocess (pps ppx_jane ppx_deriving_yojson ppx_version))
-  (libraries core_kernel)
+  (libraries core_kernel layouts)
   (modules versioned_module_good))
 
 (executable
   (name versioned_sig_good)
   (preprocess (pps ppx_jane ppx_deriving_yojson ppx_version))
-  (libraries core_kernel)
+  (libraries core_kernel layouts)
   (modules versioned_sig_good))
+
+;; layouts
+(executable
+ (name layouts_good)
+ (preprocess (pps ppx_jane ppx_deriving_yojson ppx_version))
+ (libraries core_kernel layouts)
+ (modules layouts_good))
 
 ;;; should fail
 
@@ -37,25 +50,25 @@
 (library
   (name bad_version_syntax_missing_versioned)
   (preprocess (pps ppx_jane ppx_deriving_yojson ppx_version))
-  (libraries core_kernel)
+  (libraries core_kernel layouts)
   (modules bad_version_syntax_missing_versioned))
 
 (library
   (name bad_versioned_in_functor)
   (preprocess (pps ppx_jane ppx_deriving_yojson ppx_version))
-  (libraries core_kernel)
+  (libraries core_kernel layouts)
   (modules bad_versioned_in_functor))
 
 (library
   (name bad_versioned_in_nested_functor)
   (preprocess (pps ppx_jane ppx_deriving_yojson ppx_version))
-  (libraries core_kernel)
+  (libraries core_kernel layouts)
   (modules bad_versioned_in_nested_functor))
 
 (library
   (name bad_version_syntax_multiple_errors)
   (preprocess (pps ppx_jane ppx_deriving_yojson ppx_version))
-  (libraries core_kernel)
+  (libraries core_kernel layouts)
   (modules bad_version_syntax_multiple_errors))
 
 ;; versioning
@@ -78,48 +91,48 @@
 (library
   (name versioned_bad_option)
   (preprocess (pps ppx_jane ppx_deriving_yojson ppx_version))
-  (libraries core_kernel)
+  (libraries core_kernel layouts)
   (modules versioned_bad_option))
 
 (library
   (name versioned_bad_contained_types)
   (preprocess (pps ppx_jane ppx_deriving_yojson ppx_version))
-  (libraries core_kernel)
+  (libraries core_kernel layouts)
   (modules versioned_bad_contained_types))
 
 (library
   (name versioned_bad_arrow_type)
   (preprocess (pps ppx_jane ppx_deriving_yojson ppx_version))
-  (libraries core_kernel)
+  (libraries core_kernel layouts)
   (modules versioned_bad_arrow_type))
 
 ;; module versioning
 (library
   (name versioned_module_bad_stable_name)
   (preprocess (pps ppx_jane ppx_deriving_yojson ppx_version))
-  (libraries core_kernel)
+  (libraries core_kernel layouts)
   (modules versioned_module_bad_stable_name))
 
 (library
   (name versioned_module_bad_version_name)
   (preprocess (pps ppx_jane ppx_deriving_yojson ppx_version))
-  (libraries core_kernel)
+  (libraries core_kernel layouts)
   (modules versioned_module_bad_version_name))
 
 (library
   (name versioned_module_bad_missing_type)
   (preprocess (pps ppx_jane ppx_deriving_yojson ppx_version))
-  (libraries core_kernel)
+  (libraries core_kernel layouts)
   (modules versioned_module_bad_missing_type))
 
 (library
   (name versioned_module_bad_version_order)
   (preprocess (pps ppx_jane ppx_deriving_yojson ppx_version))
-  (libraries core_kernel)
+  (libraries core_kernel layouts)
   (modules versioned_module_bad_version_order))
 
 (library
   (name versioned_module_bad_missing_to_latest)
   (preprocess (pps ppx_jane ppx_deriving_yojson ppx_version))
-  (libraries core_kernel)
+  (libraries core_kernel layouts)
   (modules versioned_module_bad_missing_to_latest))

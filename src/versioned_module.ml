@@ -4,9 +4,6 @@ open Versioned_util
 
 let no_toplevel_latest_type = ref false
 
-(* option to `deriving version' *)
-type version_option = No_version_option | Asserted | Binable
-
 (* TODO: Check if we need to optcomp this for 4.08 support. *)
 (*
 let create_attr ~loc attr_name attr_payload =
@@ -27,7 +24,7 @@ let rec add_deriving ~loc ~version_option attributes =
   in
   let version_expr =
     match version_option with
-    | No_version_option ->
+    | Version_option.Derived ->
         [%expr version]
     | Asserted ->
         [%expr version {asserted}]
@@ -39,7 +36,7 @@ let rec add_deriving ~loc ~version_option attributes =
       let attr_name = mk_loc ~loc "deriving" in
       let attr_payload =
         match version_option with
-        | No_version_option | Asserted ->
+        | Derived | Asserted ->
             payload [[%expr bin_io]; version_expr]
         | Binable ->
             payload [version_expr]
@@ -70,7 +67,7 @@ let rec add_deriving ~loc ~version_option attributes =
           in
           let needs_bin_io =
             match version_option with
-            | No_version_option | Asserted ->
+            | Derived | Asserted ->
                 true
             | Binable ->
                 false
@@ -184,6 +181,8 @@ let erase_stable_versions =
 
 let version_type ~version_option version stri =
   let loc = stri.pstr_loc in
+  let (module Ast_builder) = Ast_builder.make loc in
+  let open Ast_builder in
   let t, params =
     let subst_type stri =
       (* NOTE: Can't use [Ast_pattern] here; it rejects attributes attached to
@@ -218,7 +217,6 @@ let version_type ~version_option version stri =
         Location.raise_errorf ~loc:stri.pstr_loc
           "Expected a single public type t, or a module T."
   in
-  let (module Ast_builder) = Ast_builder.make loc in
   let with_version =
     let open Ast_builder in
     let typ =
@@ -255,6 +253,66 @@ let version_type ~version_option version stri =
          ~expr:
            (pmod_structure
               [pstr_type Recursive [typ]; pstr_type Recursive [t]; create]))
+  in
+  let get_type_decl type_name =
+    match with_version.pstr_desc with
+    | Pstr_module binding -> (
+      match binding.pmb_expr.pmod_desc with
+      | Pmod_structure str_items -> (
+        match
+          List.find_map str_items ~f:(fun str_item ->
+              match str_item.pstr_desc with
+              | Pstr_type (_rec_flag, [type_decl])
+                when String.equal type_decl.ptype_name.txt type_name ->
+                  Some type_decl
+              | _ ->
+                  None )
+        with
+        | Some type_decl ->
+            type_decl
+        | None ->
+            Location.raise_errorf ~loc:with_version.pstr_loc
+              "Cannot get type decl for layout, no type `%s` in module"
+              type_name )
+      | _ ->
+          (* unreachable *)
+          Location.raise_errorf ~loc:with_version.pstr_loc
+            "Cannot get type decl for layout, module does not contain a \
+             structure" )
+    | _ ->
+        (* unreachable *)
+        Location.raise_errorf ~loc:with_version.pstr_loc
+          "Cannot generate a layout, not a module binding"
+  in
+  let layouts =
+    (* layout for `With_version.typ`, which is the same type as the user's `t` *)
+    let typ_layout =
+      let type_decl = get_type_decl "typ" in
+      let layout_expr =
+        Gen_layout.generate_layout_expr ~version_option type_decl
+      in
+      [%stri let bin_layout_typ = [%e layout_expr]]
+    in
+    (* layout for `With_version.t`, a record which includes a version *)
+    let layout =
+      let type_decl = get_type_decl "t" in
+      let layout_expr =
+        Gen_layout.generate_layout_expr ~version ~version_option type_decl
+      in
+      [%stri let bin_layout_t = [%e layout_expr]]
+    in
+    let layout_uses =
+      let mk_layout_ident s =
+        let open Ast_builder in
+        let name = Gen_layout.layout_name_of_type_name s in
+        let txt = Longident.Lident name in
+        pexp_ident {txt; loc}
+      in
+      let typ_layout_name = mk_layout_ident "typ" in
+      let layout_name = mk_layout_ident "t" in
+      [%stri let _ = ([%e typ_layout_name], [%e layout_name])]
+    in
+    [typ_layout; layout; layout_uses]
   in
   let arg_names = List.mapi params ~f:(fun i _ -> sprintf "x%i" i) in
   let apply_args =
@@ -384,7 +442,7 @@ let version_type ~version_option version stri =
   in
   match stri.pstr_desc with
   | Pstr_type _ ->
-      (List.is_empty params, [t], with_version :: bin_io_shadows)
+      (List.is_empty params, [t], with_version :: (layouts @ bin_io_shadows))
   | Pstr_module
       ( {pmb_expr= {pmod_desc= Pmod_structure (stri :: str); _} as pmod; _} as
       pmb ) ->
@@ -395,7 +453,7 @@ let version_type ~version_option version stri =
                 { pmb with
                   pmb_expr= {pmod with pmod_desc= Pmod_structure (t :: str)} }
           } ]
-      , with_version :: bin_io_shadows )
+      , with_version :: (layouts @ bin_io_shadows) )
   | _ ->
       assert false
 
@@ -427,12 +485,12 @@ let convert_module_stri ~version_option last_version stri =
     | [] ->
         Location.raise_errorf ~loc:str.loc
           "Expected a type declaration in this structure."
-    | ({ pstr_desc=
-          Pstr_module
-            { pmb_name= {txt= "T"; _}
-            ; pmb_expr= {pmod_desc= Pmod_structure (type_stri :: _); _}
-            ; _ }
-      ; _ } as stri)
+    | ( { pstr_desc=
+            Pstr_module
+              { pmb_name= {txt= "T"; _}
+              ; pmb_expr= {pmod_desc= Pmod_structure (type_stri :: _); _}
+              ; _ }
+        ; _ } as stri )
       :: ( { pstr_desc=
                Pstr_include
                  {pincl_mod= {pmod_desc= Pmod_ident {txt= Lident "T"; _}; _}; _}
@@ -463,7 +521,7 @@ let convert_modbody ~loc ~version_option body =
   (* allow unconverted modules following versioned modules *)
   let body, unconverted =
     match version_option with
-    | No_version_option ->
+    | Version_option.Derived ->
         (body, [])
     | Asserted ->
         if List.is_empty body then (body, [])
@@ -624,7 +682,7 @@ let convert_module_type_signature_item {sigitems; parameterless_t; type_decl}
       , [ ( {ptype_name= {txt= "t"; loc}; ptype_attributes; ptype_params; _} as
           type_ ) ] ) ->
       let ptype_attributes' =
-        add_deriving ~loc ~version_option:No_version_option ptype_attributes
+        add_deriving ~loc ~version_option:Derived ptype_attributes
       in
       let psig_desc =
         Psig_type (recflag, [{type_ with ptype_attributes= ptype_attributes'}])
@@ -648,13 +706,27 @@ type module_type_with_convertible =
   ; extra_items: signature_item list }
 
 (* add deriving items to type t in module type *)
-let convert_module_type mod_ty =
+let convert_module_type ~loc mod_ty =
   match mod_ty.pmty_desc with
   | Pmty_signature signature ->
       let {sigitems; parameterless_t; type_decl} =
         convert_module_type_signature signature
       in
-      { module_type= {mod_ty with pmty_desc= Pmty_signature (List.rev sigitems)}
+      let layout_decl =
+        let open Ast_helper in
+        Sig.value
+          (Val.mk ~loc {txt= "bin_layout_t"; loc}
+             (Typ.mk
+                (Ptyp_constr
+                   ( { txt=
+                         Longident.parse
+                           "Ppx_version_runtime.Bin_prot_layout.t"
+                     ; loc }
+                   , [] ))))
+      in
+      { module_type=
+          { mod_ty with
+            pmty_desc= Pmty_signature (List.rev (layout_decl :: sigitems)) }
       ; convertible= parameterless_t
       ; extra_items= Option.to_list type_decl }
   | _ ->
@@ -675,7 +747,7 @@ type module_accum =
   ; no_toplevel_latest: bool }
 
 (* convert modules Vn ... V1 contained in Stable *)
-let convert_module_decls ~loc:_ signature =
+let convert_module_decls ~loc signature =
   let init =
     { latest= None
     ; last= None
@@ -701,7 +773,7 @@ let convert_module_decls ~loc:_ signature =
         let in_latest = Option.is_none latest in
         let latest = if in_latest then Some pmd_name.txt else latest in
         let {module_type; convertible= module_convertible; extra_items} =
-          convert_module_type pmd_type
+          convert_module_type ~loc pmd_type
         in
         let psig_desc' = Psig_module {pmd with pmd_type= module_type} in
         let sigitem' = {sigitem with psig_desc= psig_desc'} in
@@ -804,7 +876,7 @@ let () =
   let module_extension =
     Extension.(
       declare "versioned" Context.structure_item module_ast_pattern
-        (version_module ~version_option:No_version_option))
+        (version_module ~version_option:Derived))
   in
   let module_extension_asserted =
     Extension.(

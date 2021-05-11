@@ -131,11 +131,6 @@ module Printing = struct
     let type_decl_no_attrs = type_decl_remove_internal_attributes type_decl in
     {type_decl_no_attrs with ptype_attributes}
 
-  (* convert type_decls to structure item so we can print it *)
-  let type_decls_to_stri type_decls =
-    (* type derivers only work with recursive types *)
-    {pstr_desc= Pstr_type (Ast.Recursive, type_decls); pstr_loc= Location.none}
-
   (* prints module_path:type_definition *)
   let print_type ~loc:_ ~path (_rec_flag, type_decls) _rpc _asserted _binable =
     let module_path = module_path_list path in
@@ -147,7 +142,7 @@ module Printing = struct
     let type_decls_filtered_attrs =
       List.map type_decls ~f:filter_type_decls_attrs
     in
-    let stri = type_decls_to_stri type_decls_filtered_attrs in
+    let stri = Versioned_util.type_decls_to_stri type_decls_filtered_attrs in
     Pprintast.structure_item Versioned_util.diff_formatter stri ;
     Format.pp_print_flush Versioned_util.diff_formatter () ;
     printf "\n%!" ;
@@ -248,6 +243,7 @@ module Deriving = struct
     ; "int"
     ; "int32"
     ; "int64"
+    ; "nativeint"
     ; "float"
     ; "char"
     ; "string"
@@ -509,26 +505,21 @@ module Deriving = struct
     (* binable is synonym for asserted,
        in the sense that we don't require the type to be versioned
     *)
-    let asserted = asserted || binable in
+    let version_option = Version_option.of_flags ~asserted ~binable in
     let type_decl = get_type_decl_representative type_decls in
-    if asserted && rpc then
+    if (asserted || binable) && rpc then
       Location.raise_errorf ~loc:type_decl.ptype_loc
-        "Options \"asserted\" and \"rpc\" cannot be combined" ;
+        "Options \"asserted\" or \"binable\", and \"rpc\" cannot be combined" ;
     let generation_kind = if rpc then Rpc else Plain in
     let module_path = module_path_list path in
     let inner3_modules = List.take (List.rev module_path) 3 in
-    (* TODO: when Module_version.Registration goes away, remove
-       the empty list special case
-    *)
-    if List.is_empty inner3_modules then
-      (* module path doesn't seem to be tracked inside test module *)
-      []
-    else (
-      validate_type_decl inner3_modules generation_kind type_decl ;
-      let versioned_decls =
-        generate_versioned_decls ~asserted generation_kind type_decl
-      in
-      let type_name = type_decl.ptype_name.txt in
+    validate_type_decl inner3_modules generation_kind type_decl ;
+    let versioned_decls =
+      generate_versioned_decls ~asserted:(asserted || binable) generation_kind
+        type_decl
+    in
+    let type_name = type_decl.ptype_name.txt in
+    let decls =
       (* generate version number for Rpc response, but not for query, so we
          don't get an unused value
       *)
@@ -536,7 +527,58 @@ module Deriving = struct
         versioned_decls
       else
         generate_version_number_decl inner3_modules loc generation_kind
-        @ versioned_decls )
+        @ versioned_decls
+    in
+    let layouts_opt =
+      let manifest_attrs =
+        match type_decl.ptype_manifest with
+        | None ->
+            []
+        | Some {ptyp_attributes; _} ->
+            ptyp_attributes
+      in
+      let module E = Ppxlib.Ast_builder.Make (struct
+        let loc = type_decl.ptype_loc
+      end) in
+      let open E in
+      let layout_name =
+        Gen_layout.layout_name_of_type_name type_decl.ptype_name.txt
+      in
+      let layout_pat = pvar layout_name in
+      let layout_for_testing_pat = pvar (layout_name ^ "_for_testing") in
+      let layout_id = pexp_ident (Located.mk (Lident layout_name)) in
+      match Gen_layout.layout_ident_opt_of_attributes manifest_attrs with
+      | Some lident ->
+          (* if there's a [@layout] on the type, use that *)
+          let layout_ref = {txt= lident; loc} in
+          Some
+            [ [%stri let [%p layout_pat] = [%e pexp_ident layout_ref]]
+            ; [%stri let [%p layout_for_testing_pat] = [%e layout_id]] ]
+      | None -> (
+        match version_option with
+        | Binable ->
+            None
+        | Asserted | Derived ->
+            let layout_expr =
+              Gen_layout.generate_layout_expr ~version_option type_decl
+            in
+            let layout_decl = [%stri let [%p layout_pat] = [%e layout_expr]] in
+            (* bin_layout_t will be shadowed, so make it available via another name *)
+            let layout_for_testing_decl =
+              [%stri let [%p layout_for_testing_pat] = [%e layout_id]]
+            in
+            if rpc then
+              let layout_register_decl =
+                [%stri
+                  let () =
+                    Ppx_version_runtime.Bin_prot_layout.register_layout
+                      [%e layout_id]]
+              in
+              Some [layout_decl; layout_for_testing_decl; layout_register_decl]
+            else Some [layout_decl; layout_for_testing_decl] )
+    in
+    Option.value_map layouts_opt ~default:decls ~f:(fun layouts ->
+        decls @ layouts )
 
   let generate_val_decls_for_type_decl ~loc type_decl =
     match type_decl.ptype_kind with
