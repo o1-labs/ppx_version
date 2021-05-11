@@ -4,7 +4,9 @@ open Core_kernel
 open Ppxlib
 
 type binable_layout_result =
-  {arg1: Longident.t option; layout: Longident.t option; stringable: bool}
+    Arg1 of Longident.t
+  | Layout of Longident.t
+  | Stringable
 
 let layout_for_binable_functor_opt expr =
   let binable_result =
@@ -24,15 +26,15 @@ let layout_for_binable_functor_opt expr =
       (* use @layout on arg1, if given *)
       match Gen_layout.layout_ident_opt_of_attributes pmod_attributes with
       | Some layout_ident ->
-          Some {arg1= None; layout= Some layout_ident; stringable= false}
+          Some (Layout layout_ident)
       | None ->
-          Some {arg1= Some arg1; layout= None; stringable= false} )
+        Some (Arg1 arg1))
     | Pmod_apply
         ( { pmod_desc=
               Pmod_ident {txt= Ldot (Lident "Binable", "Of_stringable"); _}
           ; _ }
         , _arg ) ->
-        Some {arg1= None; layout= None; stringable= true}
+      Some Stringable
     | _ ->
         None
   in
@@ -44,7 +46,7 @@ let layout_for_binable_functor_opt expr =
        a layout; layouts are hand-written for those
     *)
       None
-  | Some {arg1= Some lident; layout= None; stringable= false} ->
+  | Some (Arg1 lident) ->
       (* lident is a module name, like Stable.V1 *)
       let layout_name = Ldot (lident, "bin_layout_t") in
       let arg1_layout_expr = pexp_ident {txt= layout_name; loc} in
@@ -63,7 +65,7 @@ let layout_for_binable_functor_opt expr =
         ]
       in
       Some layout_str
-  | Some {arg1= None; layout= Some layout_ident; stringable= false} ->
+  | Some (Layout layout_ident) ->
       let layout_str =
         [%str
 
@@ -74,7 +76,7 @@ let layout_for_binable_functor_opt expr =
           let _ = (bin_layout_t,bin_layout_t_for_testing)]
       in
       Some layout_str
-  | Some {arg1= None; layout= None; stringable= true} ->
+  | Some Stringable ->
       let type_decl_string = "type t = <type serialized via a functor>" in
       let type_name = "t" in
       let rule_expr =
@@ -95,8 +97,6 @@ let layout_for_binable_functor_opt expr =
           let _ = (bin_layout_t,bin_layout_t_for_testing)]
       in
       Some layout_str
-  | _ ->
-      Location.raise_errorf "Internal error: incoherent binable result"
 
 let layouts_ast =
   object (self)
