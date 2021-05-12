@@ -66,13 +66,13 @@ module M5 = struct
   [%%versioned
   module Stable = struct
     module V5 = struct
-      type t = Stable.V1.t array array sexp_opaque [@@deriving sexp]
+      type t = Stable.V1.t array array [@sexp.opaque] [@@deriving sexp]
 
       let to_latest = Fn.id
     end
 
     module V4 = struct
-      type t = Stable.V1.t option sexp_opaque [@@deriving sexp]
+      type t = Stable.V1.t option [@sexp.opaque] [@@deriving sexp]
 
       let to_latest _ = [||]
     end

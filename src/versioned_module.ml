@@ -7,19 +7,11 @@ let no_toplevel_latest_type = ref false
 (* option to `deriving version' *)
 type version_option = No_version_option | Asserted | Binable
 
-(* TODO: Check if we need to optcomp this for 4.08 support. *)
-(*
-let create_attr ~loc attr_name attr_payload =
-  {Parsetree.attr_name; attr_payload; attr_loc= loc}
+let create_attr ~loc attr_name attr_payload = {attr_name; attr_payload; attr_loc=loc}
 
-let modify_attr_payload attr attr_payload =
-  {attr with Parsetree.attr_payload}
-*)
-let create_attr ~loc:_ name payload = (name, payload)
+let modify_attr_payload attr payload = {attr with attr_payload=payload}
 
-let modify_attr_payload (name, _) payload = (name, payload)
-
-let rec add_deriving ~loc ~version_option attributes =
+let rec add_deriving ~loc ~version_option attributes : attributes =
   let (module Ast_builder) = Ast_builder.make loc in
   let payload idents =
     let payload = Ast_builder.(pstr_eval (pexp_tuple idents) []) in
@@ -47,7 +39,7 @@ let rec add_deriving ~loc ~version_option attributes =
       [create_attr ~loc attr_name attr_payload]
   | attr :: attributes -> (
       let idents =
-        Ast_pattern.(attribute (string "deriving") (single_expr_payload __))
+        Ast_pattern.(attribute ~name:(string "deriving") ~payload:(single_expr_payload __))
       in
       match parse_opt idents loc attr (fun l -> Some l) with
       | None ->
@@ -112,9 +104,9 @@ let erase_stable_versions =
 
     method! type_declaration typ =
       let typ = super#type_declaration typ in
-      let ptype_attributes =
+      let ptype_attributes : attributes =
         List.filter_map typ.ptype_attributes
-          ~f:(fun ((attr_name, payload) as attr) ->
+          ~f:(fun ({attr_name; attr_payload=payload;attr_loc} as attr) ->
             if String.equal attr_name.txt "deriving" then
               let remove_derivers = [|"bin_io"; "version"|] in
               match payload with
@@ -142,17 +134,20 @@ let erase_stable_versions =
                       None
                   | [e] ->
                       Some
-                        ( attr_name
-                        , PStr [{stri with pstr_desc= Pstr_eval (e, [])}] )
+                        { attr_name
+                        ; attr_payload = PStr [{stri with pstr_desc= Pstr_eval (e, [])}]
+                        ; attr_loc }
                   | es ->
                       Some
-                        ( attr_name
-                        , PStr
+                        { attr_name
+                        ; attr_payload = PStr
                             [ { stri with
                                 pstr_desc=
                                   Pstr_eval
                                     ({expr with pexp_desc= Pexp_tuple es}, [])
-                              } ] ) )
+                              } ]
+                        ; attr_loc
+                        } )
               | PStr
                   [ { pstr_desc=
                         Pstr_eval
@@ -372,7 +367,8 @@ let version_type ~version_option version stri =
                     [%e apply_args ~f:(mk_field "reader") [%expr bin_reader_t]]
                 }]]]
     ; [%stri
-        let _ =
+       (* ppx_js_style rejects a single underscore *)
+       let __ =
           ( bin_read_t
           , __bin_read_t__
           , bin_size_t
@@ -485,7 +481,7 @@ let convert_modbody ~loc ~version_option body =
     List.fold ~init:(None, [], [], None, !no_toplevel_latest_type) body
       ~f:(fun (version, rev_str, convs, type_stri, no_toplevel_type) stri ->
         match stri.pstr_desc with
-        | Pstr_attribute ({txt= "no_toplevel_latest_type"; _}, _) ->
+        | Pstr_attribute ({attr_name;_}) when String.equal attr_name.txt "no_toplevel_latest_type" ->
             (version, rev_str, convs, None, true)
         | _ ->
             let version, stri, should_convert, current_type_stri =
@@ -574,7 +570,7 @@ let convert_modbody ~loc ~version_option body =
                   if Int.equal i version then Some (f buf ~pos_ref) else None
               )]
         in
-        let convert_guard = [%stri let _ = bin_read_to_latest_opt] in
+        let convert_guard = [%stri let __ = bin_read_to_latest_opt] in
         convert_guard :: convert :: versions :: rev_str
     | _ ->
         rev_str
@@ -719,7 +715,7 @@ let convert_module_decls ~loc:_ signature =
         ; sigitems= sigitem' :: sigitems
         ; extra_sigitems
         ; no_toplevel_latest }
-    | Psig_attribute ({txt= "no_toplevel_latest_type"; _}, _) ->
+    | Psig_attribute ({attr_name;_}) when String.equal attr_name.txt "no_toplevel_latest_type" ->
         { latest
         ; last= None
         ; convertible

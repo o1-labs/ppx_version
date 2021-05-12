@@ -22,7 +22,7 @@ let errors_as_warnings_ref = ref false
 
 let make_deriving_validator ~pred err_msg type_decl =
   let derivers =
-    Ast_pattern.(attribute (string "deriving") (single_expr_payload __))
+    Ast_pattern.(attribute ~name:(string "deriving") ~payload:(single_expr_payload __))
   in
   match List.find_map type_decl.ptype_attributes
             ~f:(fun attr -> parse_opt derivers Location.none attr (fun l -> Some l)) with
@@ -183,8 +183,8 @@ and get_core_type_versioned_type_misuses core_type =
       else core_type_errors
   | Ptyp_object (fields, _closed_flag) ->
       let core_type_of_field field =
-        match field with
-        | Otag (_label, _attrs, core_type) ->
+        match field.pof_desc with
+        | Otag (_label, core_type) ->
             core_type
         | Oinherit core_type ->
             core_type
@@ -197,8 +197,8 @@ and get_core_type_versioned_type_misuses core_type =
       get_core_type_versioned_type_misuses core_type
   | Ptyp_variant (row_fields, _closed_flag, _labels_opt) ->
       let core_types_of_row_field field =
-        match field with
-        | Rtag (_label, _attrs, _b, core_types) ->
+        match field.prf_desc with
+        | Rtag (_label, _b, core_types) ->
             core_types
         | Rinherit core_type ->
             [core_type]
@@ -414,11 +414,11 @@ let lint_ast =
             if String.equal ty_name "t" then [err] else []
           in
           let deriving_errors_fun =
-            if rec_flag = Nonrecursive then
-              (* deriving can only appear in a recursive type *)
-              no_errors_fun
-            else if acc.in_functor then validate_neither_bin_io_nor_version
-            else validate_version_if_bin_io
+            match rec_flag with
+            | Nonrecursive -> no_errors_fun
+            | Recursive ->
+              if acc.in_functor then validate_neither_bin_io_nor_version
+              else validate_version_if_bin_io
           in
           let versioned_type_misuse_errors_fun =
             if not @@ in_versioned_type_module acc.module_path then
