@@ -69,7 +69,7 @@ let module_path_list path = List.drop (String.split path ~on:'.') 2
 module Printing = struct
   let contains_deriving_bin_io (attrs : attributes) =
     let derivers =
-      Ast_pattern.(attribute (string "deriving") (single_expr_payload __))
+      Ast_pattern.(attribute ~name:(string "deriving") ~payload:(single_expr_payload __))
     in
     match
       List.find_map attrs ~f:(fun attr ->
@@ -98,7 +98,7 @@ module Printing = struct
       let loc = Location.none
     end) in
     let open E in
-    ({txt= "deriving"; loc}, PStr [%str bin_io])
+    {attr_name={txt= "deriving"; loc}; attr_payload=PStr [%str bin_io]; attr_loc=Location.none}
 
   (* remove internal attributes, on core type in manifest and in records or variants in kind *)
   let type_decl_remove_internal_attributes type_decl =
@@ -241,7 +241,7 @@ module Deriving = struct
       let version = [%e eint version]
 
       (* to prevent unused value warnings *)
-      let _ = version]
+      let __ = version]
 
   let ocaml_builtin_types =
     [ "bytes"
@@ -377,9 +377,10 @@ module Deriving = struct
               { pexp_desc=
                   Pexp_ident {txt= Ldot (new_prefix, "__versioned__"); loc}
               ; pexp_loc
+              ; pexp_loc_stack=[]
               ; pexp_attributes= [] }
             in
-            [%str let _ = [%e versioned_ident]] @ core_type_decls
+            [%str let __ = [%e versioned_ident]] @ core_type_decls
       | _ ->
           Location.raise_errorf ~loc:core_type.ptyp_loc
             "Unrecognized type constructor for versioned type" )
@@ -532,9 +533,10 @@ module Deriving = struct
       (* generate version number for Rpc response, but not for query, so we
          don't get an unused value
       *)
-      if generation_kind = Rpc && String.equal type_name "query" then
+      match generation_kind with
+      | Rpc when String.equal type_name "query" ->
         versioned_decls
-      else
+      | _ ->
         generate_version_number_decl inner3_modules loc generation_kind
         @ versioned_decls )
 

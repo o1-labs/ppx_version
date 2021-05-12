@@ -10,11 +10,10 @@ let mk_loc ~loc txt = { Location.loc; txt }
 let map_loc ~f { Location.loc; txt } = { Location.loc; txt = f txt }
 
 let check_modname ~loc name : string =
-  match name with
-  | "Stable" -> name
-  | _ ->
-      Location.raise_errorf ~loc
-        "Expected a module named Stable, but got a module named %s." name
+  if String.equal name "Stable" then name
+  else
+    Location.raise_errorf ~loc
+      "Expected a module named Stable, but got a module named %s." name
 
 (* for diffing types and binable functors, replace newlines in standard formatter
    with a space, so string is all on one line *)

@@ -5,7 +5,7 @@ module M1 = struct
   [%%versioned
   module Stable = struct
     module V3 = struct
-      type t = int
+      type t = int [@@deriving equal]
 
       let to_latest = Fn.id
     end
@@ -28,7 +28,7 @@ let () =
   let x = 15 in
   let buf = Bigstring.create 10 in
   (* Test writing given version. *)
-  ignore (M1.Stable.V3.bin_write_t buf ~pos:0 x) ;
+  ignore (M1.Stable.V3.bin_write_t buf ~pos:0 x : int) ;
   (* Test that reads are compatible with [With_version]. *)
   let y : M1.Stable.V3.With_version.t =
     M1.Stable.V3.With_version.bin_read_t buf ~pos_ref:(ref 0)
@@ -42,7 +42,7 @@ let () =
      failure.
   *)
   ( try
-      ignore (M1.Stable.V2.bin_read_t buf ~pos_ref:(ref 0)) ;
+      ignore (M1.Stable.V2.bin_read_t buf ~pos_ref:(ref 0) : int );
       assert false
     with Failure _ -> () ) ;
   (* Test that [bin_read_to_latest_opt] finds and uses the right
@@ -59,7 +59,7 @@ module M2 = struct
   [%%versioned
   module Stable = struct
     module V3 = struct
-      type 'a t = {a: 'a; b: int}
+      type 'a t = {a: 'a; b: int} [@@deriving equal]
     end
 
     module V2 = struct
@@ -104,19 +104,19 @@ let () =
   let x : M1.Stable.V3.t M2.Stable.V3.t = {M2.a= 15; b= 15} in
   let buf = Bigstring.create 20 in
   (* Test writing given version. *)
-  ignore (M2.Stable.V3.bin_write_t M1.Stable.V3.bin_write_t buf ~pos:0 x) ;
+  ignore (M2.Stable.V3.bin_write_t M1.Stable.V3.bin_write_t buf ~pos:0 x : int);
   (* Test that reads are compatible with [With_version]. *)
   let y : M1.Stable.V3.t M2.Stable.V3.With_version.t =
     M2.Stable.V3.With_version.bin_read_t M1.Stable.V3.bin_read_t buf
       ~pos_ref:(ref 0)
   in
   assert (y.version = 3) ;
-  assert (y.t = x) ;
+  assert (M2.Stable.V3.equal Int.equal y.t x) ;
   (* Test that what was read is what was written. *)
   let z =
     M2.Stable.V3.bin_read_t M1.Stable.V3.bin_read_t buf ~pos_ref:(ref 0)
   in
-  assert (z = x) ;
+  assert (M2.Stable.V3.equal Int.equal z x) ;
   (* Test that trying to read the wrong version results in an assertion
      failure.
      Note: these types will serialise to the same thing, as
@@ -124,7 +124,7 @@ let () =
      [M1.Stable.V3.t M2.Stable.V3.t = {a: M1.Stable.V3.t; b: int}]
   *)
   try
-    ignore (M2.Stable.V3.bin_read_t bin_read_int buf ~pos_ref:(ref 0)) ;
+    ignore (M2.Stable.V3.bin_read_t bin_read_int buf ~pos_ref:(ref 0) : int M2.Stable.V3.t) ;
     assert false
   with Assert_failure _ -> ()
 
@@ -180,7 +180,7 @@ module M7 = struct
   [%%versioned
   module Stable = struct
     module V1 = struct
-      type t = M1.Stable.V3.t M2.Stable.V3.t
+      type t = M1.Stable.V3.t M2.Stable.V3.t [@@deriving equal]
 
       let to_latest = Fn.id
     end
@@ -192,16 +192,16 @@ let () =
   let x : M7.Stable.V1.t = {a= 15; b= 20} in
   let buf = Bigstring.create 20 in
   (* Test writing given version. *)
-  ignore (M7.Stable.V1.bin_write_t buf ~pos:0 x) ;
+  ignore (M7.Stable.V1.bin_write_t buf ~pos:0 x : int) ;
   (* Test that reads are compatible with [With_version]. *)
   let y : M7.Stable.V1.With_version.t =
     M7.Stable.V1.With_version.bin_read_t buf ~pos_ref:(ref 0)
   in
   assert (y.version = 1) ;
-  assert (y.t = x) ;
+  assert (M7.Stable.V1.equal y.t x) ;
   (* Test that what was read is what was written. *)
   let z = M7.Stable.V1.bin_read_t buf ~pos_ref:(ref 0) in
-  assert (z = x)
+  assert (M7.Stable.V1.equal z x)
 
 (* Test that modules may have other contents besides the type declarations. *)
 module M8 = struct
@@ -216,7 +216,7 @@ module M8 = struct
 
       let things = 3
 
-      let _ = (some, other, things)
+      let _ : int * int * int = (some, other, things)
 
       let to_latest = Fn.id
 
@@ -246,7 +246,7 @@ module M8 = struct
   module X = struct
     open Stable.V1
 
-    let _ = (some, other, things)
+    let _ : int * int * int = (some, other, things)
 
     module X = X
 

@@ -102,7 +102,8 @@ let rewrite_to_bin_io ~loc ~path (_rec_flag, type_decls) =
   validate_type_decl inner2_modules type_decl1 ;
   let ctxt =
     let derived_item_loc = loc in
-    Expansion_context.Deriver.make ~derived_item_loc ~base:ctxt_base ()
+    (* TODO: is inline:false what we want? *)
+    Expansion_context.Deriver.make ~derived_item_loc ~base:ctxt_base () ~inline:false
   in
   List.concat_map bin_io_gens ~f:(fun gen ->
       gen ~ctxt (Nonrecursive, type_decls) [] )
