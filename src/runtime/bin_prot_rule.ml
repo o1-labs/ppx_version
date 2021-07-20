@@ -96,8 +96,19 @@ and rule_ref = Unresolved of unresolved | Resolved of resolved
 let to_string t = to_yojson t |> Yojson.Safe.to_string
 
 let compress_references (rule : t) =
+  let follow_ref_chain (rule : t) =
+    let rec go rule =
+      match rule with
+      | Reference (Resolved ({ref_rule=Reference (Resolved _) as inner_ref; _})) ->
+        go inner_ref
+      | Reference (Resolved {ref_rule;_}) ->
+        ref_rule
+      | _ -> rule
+    in
+    go rule
+  in
   let rec go rule =
-  match rule with
+    match rule with
     |Nat0|Unit|Bool|String|Char|Int|Int32|Int64|Native_int|Float|Vec|Bigstring|Type_var _
     -> rule
   |Option rule' ->
@@ -129,10 +140,9 @@ let compress_references (rule : t) =
   |Reference (Unresolved _) ->
     (* can't compress an unresolved reference *)
     rule
-  | Reference (Resolved {ref_rule=Reference (Resolved _) as resolved_tail;_}) ->
-    (* snip off head item from resolved chain *)
-    Format.eprintf "REMOVING RESOLVED ITEM@.";
-    go resolved_tail
+  | Reference (Resolved ({ref_rule=(Reference (Resolved _) as ref_tail);_} as resolved))  ->
+    (* maintain head of Resolved chain, replace tail with rule at end of Resolved chain *)
+    go (Reference (Resolved {resolved with ref_rule = follow_ref_chain ref_tail }))
   | Reference (Resolved resolved) ->
     (* end of resolved chain *)
     Reference (Resolved {resolved with ref_rule = go resolved.ref_rule})
