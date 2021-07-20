@@ -16,11 +16,12 @@ open Core_kernel
 
 type t =
   { layout_loc: string
+  ; module_path:string
   ; version_opt: int option
   ; type_decl: string
   ; bin_io_derived: bool
   ; bin_prot_rule: Bin_prot_rule.t }
-[@@deriving sexp_of, to_yojson]
+[@@deriving sexp_of, yojson]
 
 let register_layout =
   let layouts_tbl = String.Table.create () in

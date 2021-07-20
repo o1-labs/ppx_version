@@ -89,6 +89,7 @@ let layout_for_binable_functor_opt expr =
             { Ppx_version_runtime.Bin_prot_layout.layout_loc= __LOC__
             ; version_opt= None
             ; type_decl= [%e estring type_decl_string]
+            ; module_path= "TODO"
             ; bin_io_derived= false
             ; bin_prot_rule= [%e rule_expr] }
 

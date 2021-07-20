@@ -295,6 +295,7 @@ let rec bin_prot_rule_to_expr ~loc ~type_name rule =
           (* given the layout name, we can refer to the layout we've generated *)
           let layout_expr = pexp_ident {txt= layout_id; loc} in
           let type_decl_field = {txt= Lident "type_decl"; loc} in
+          let module_path_field = {txt= Lident "module_path"; loc} in
           let bin_io_derived_field = {txt= Lident "bin_io_derived"; loc} in
           let rule_field = {txt= Lident "bin_prot_rule"; loc} in
           let unresolveds_expr = List.map params ~f:go |> elist in
@@ -302,6 +303,7 @@ let rec bin_prot_rule_to_expr ~loc ~type_name rule =
             Ppx_version_runtime.Bin_prot_rule.Reference
               (Ppx_version_runtime.Bin_prot_rule.Resolved
                  { source_type_decl= [%e pexp_field layout_expr type_decl_field]
+                 ; source_module_path = [%e pexp_field layout_expr module_path_field]
                  ; bin_io_derived=
                      [%e pexp_field layout_expr bin_io_derived_field]
                  ; ref_rule=
@@ -409,7 +411,7 @@ let bin_prot_rule_of_type_decl type_decl =
     let bin_prot_rule' = Type_abstraction (type_params, bin_prot_rule) in
     bin_prot_rule_to_expr ~loc:type_decl.ptype_loc ~type_name bin_prot_rule'
 
-let generate_layout_expr ?version ~version_option
+let generate_layout_expr ?version ~version_option ~path
     (type_decl : type_declaration) : expression =
   let (module Ast_builder) = Ast_builder.make type_decl.ptype_loc in
   let open Ast_builder in
@@ -424,6 +426,19 @@ let generate_layout_expr ?version ~version_option
     mk_field "Ppx_version_runtime.Bin_prot_layout.layout_loc"
       (pexp_constant (Pconst_string (loc_string, None)))
   in
+  (* path is path/to/filename.ml.M1.M2... *)
+  let path_to_type =
+    let file_and_modules = (String.split path ~on:'/') |> List.last_exn in
+    match String.split file_and_modules ~on:'.' with
+    | filename::_ml::modules ->
+      let file_module = String.mapi filename ~f:(fun ndx c -> if ndx = 0 then Char.uppercase c else c) in
+      String.concat ~sep:"." (file_module :: modules)
+    | _ ->
+      (* should be unreachable *)
+      Location.raise_errorf "Unexpected path to type declaration"
+  in
+  let module_path = mk_field "module_path"
+      (pexp_constant (Pconst_string (path_to_type, None))) in
   (* version_opt *)
   let version_number_field =
     mk_field "version_opt"
@@ -454,6 +469,7 @@ let generate_layout_expr ?version ~version_option
   in
   let fields =
     [ layout_loc
+    ; module_path
     ; version_number_field
     ; type_decl_field
     ; bin_io_derived

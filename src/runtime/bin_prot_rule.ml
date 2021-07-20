@@ -38,6 +38,10 @@ let sexp_of_longident lident = Sexp.of_string (Ppxlib.Longident.name lident)
 
 let longident_to_yojson lident = `String (Ppxlib.Longident.name lident)
 
+let longident_of_yojson =
+  function | `String s -> Ok (Ppxlib.Longident.parse s)
+           | _ -> Error "longident_of_yojson: expected String"
+
 (* Nat0, Vec, and Bigstring are provided for completeness
    [@@deriving bin_io] doesn't work with types `Bin_prot.Nat0.t`, `vec`, and `bigstring`
    these rules could be used in hand-written layouts
@@ -84,12 +88,65 @@ and polyvar = Tagged of tagged | Inherited of t
 
 and unresolved = {params: t list; layout_id: longident}
 
-and resolved = {source_type_decl: string; bin_io_derived: bool; ref_rule: t}
+and resolved = {source_type_decl: string; source_module_path: string; bin_io_derived: bool; ref_rule: t}
 
 and rule_ref = Unresolved of unresolved | Resolved of resolved
-[@@deriving sexp_of, to_yojson]
+[@@deriving sexp_of, yojson]
 
 let to_string t = to_yojson t |> Yojson.Safe.to_string
+
+let compress_references (rule : t) =
+  let rec go rule =
+  match rule with
+    |Nat0|Unit|Bool|String|Char|Int|Int32|Int64|Native_int|Float|Vec|Bigstring|Type_var _
+    -> rule
+  |Option rule' ->
+    Option (go rule')
+  |Record fields ->
+    let fields' = List.map fields ~f:(fun field ->
+        { field with field_rule = go field.field_rule})
+    in
+    Record fields'
+  |Tuple items ->
+    Tuple (List.map items ~f:go)
+  |Sum summands ->
+    Sum (List.map summands ~f:(fun summand -> { summand with ctor_args = List.map summand.ctor_args ~f:go}))
+  | Polyvar polyvars ->
+    Polyvar (List.map polyvars ~f:(fun polyvar ->
+        match polyvar with
+        | Tagged tagged ->
+          Tagged { tagged with polyvar_args = List.map tagged.polyvar_args ~f:go }
+        | Inherited rule' ->
+          Inherited (go rule')))
+  |List rule' ->
+    List (go rule')
+  |Hashtable entry ->
+    let entry' =
+      { key_rule = go entry.key_rule
+      ; value_rule = go entry.value_rule}
+    in
+    Hashtable entry'
+  |Reference (Unresolved _) ->
+    (* can't compress an unresolved reference *)
+    rule
+  | Reference (Resolved {ref_rule=Reference (Resolved _) as resolved_tail;_}) ->
+    (* snip off head item from resolved chain *)
+    Format.eprintf "REMOVING RESOLVED ITEM@.";
+    go resolved_tail
+  | Reference (Resolved resolved) ->
+    (* end of resolved chain *)
+    Reference (Resolved {resolved with ref_rule = go resolved.ref_rule})
+  | Self_reference items ->
+    Self_reference (List.map items ~f:go)
+  | Type_abstraction (nms,rule') ->
+    Type_abstraction (nms,go rule')
+  | Type_closure (bindings,rule') ->
+    let bindings' = List.map bindings ~f:(fun (nm,rule'') ->
+        (nm,go rule''))
+    in
+    Type_closure (bindings',go rule')
+  in
+  go rule
 
 let needs_type_closure (rule : t) =
   let rec go rule =

@@ -179,7 +179,7 @@ let erase_stable_versions =
                (List.map ~f:fst typ.ptype_params)) }
   end
 
-let version_type ~version_option version stri =
+let version_type ~version_option ~path version stri =
   let loc = stri.pstr_loc in
   let (module Ast_builder) = Ast_builder.make loc in
   let open Ast_builder in
@@ -289,7 +289,7 @@ let version_type ~version_option version stri =
     let typ_layout =
       let type_decl = get_type_decl "typ" in
       let layout_expr =
-        Gen_layout.generate_layout_expr ~version_option type_decl
+        Gen_layout.generate_layout_expr ~version_option ~path type_decl
       in
       [%stri let bin_layout_typ = [%e layout_expr]]
     in
@@ -297,7 +297,7 @@ let version_type ~version_option version stri =
     let layout =
       let type_decl = get_type_decl "t" in
       let layout_expr =
-        Gen_layout.generate_layout_expr ~version ~version_option type_decl
+        Gen_layout.generate_layout_expr ~version ~version_option ~path type_decl
       in
       [%stri let bin_layout_t = [%e layout_expr]]
     in
@@ -457,7 +457,7 @@ let version_type ~version_option version stri =
   | _ ->
       assert false
 
-let convert_module_stri ~version_option last_version stri =
+let convert_module_stri ~version_option ~path last_version stri =
   let module_pattern =
     Ast_pattern.(
       pstr_module (module_binding ~name:__' ~expr:(pmod_structure __')))
@@ -501,7 +501,7 @@ let convert_module_stri ~version_option last_version stri =
         (type_stri, type_stri, str)
   in
   let should_convert, type_str, with_version_bin_io_shadows =
-    version_type ~version_option version stri
+    version_type ~version_option ~path version stri
   in
   (* TODO: If [should_convert] then look for [to_latest]. *)
   let open Ast_builder.Default in
@@ -514,7 +514,7 @@ let convert_module_stri ~version_option last_version stri =
   , should_convert
   , type_stri )
 
-let convert_modbody ~loc ~version_option body =
+let convert_modbody ~loc ~version_option ~path body =
   let may_convert_latest = ref None in
   let latest_version = ref None in
   let body_len = List.length body in
@@ -547,7 +547,7 @@ let convert_modbody ~loc ~version_option body =
             (version, rev_str, convs, None, true)
         | _ ->
             let version, stri, should_convert, current_type_stri =
-              convert_module_stri ~version_option version stri
+              convert_module_stri ~version_option ~path version stri
             in
             let type_stri =
               if no_toplevel_type then None
@@ -639,12 +639,12 @@ let convert_modbody ~loc ~version_option body =
   in
   (List.rev rev_str @ unconverted, type_stri)
 
-let version_module ~loc ~version_option ~path:_ modname modbody =
+let version_module ~loc ~version_option ~path modname modbody =
   Printexc.record_backtrace true ;
   try
     let modname = map_loc ~f:(check_modname ~loc:modname.loc) modname in
     let modbody_txt, type_stri =
-      convert_modbody ~version_option ~loc:modbody.loc modbody.txt
+      convert_modbody ~version_option ~path ~loc:modbody.loc modbody.txt
     in
     let modbody = {Location.txt= modbody_txt; loc= modbody.loc} in
     let open Ast_helper in

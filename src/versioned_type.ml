@@ -560,7 +560,7 @@ module Deriving = struct
             None
         | Asserted | Derived ->
             let layout_expr =
-              Gen_layout.generate_layout_expr ~version_option type_decl
+              Gen_layout.generate_layout_expr ~version_option ~path type_decl
             in
             let layout_decl = [%stri let [%p layout_pat] = [%e layout_expr]] in
             (* bin_layout_t will be shadowed, so make it available via another name *)
