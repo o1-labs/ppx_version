@@ -75,6 +75,8 @@ type t =
   | Type_abstraction of string list * t
   (* recursive parameterized type with bindings *)
   | Type_closure of (string * t) list * t
+  (* hand-written serialization *)
+  | Custom
 
 and record_field = {field_name: string; field_rule: t}
 
@@ -109,7 +111,7 @@ let compress_references (rule : t) =
   in
   let rec go rule =
     match rule with
-    |Nat0|Unit|Bool|String|Char|Int|Int32|Int64|Native_int|Float|Vec|Bigstring|Type_var _
+    |Nat0|Unit|Bool|String|Char|Int|Int32|Int64|Native_int|Float|Vec|Bigstring|Type_var _|Custom
     -> rule
   |Option rule' ->
     Option (go rule')
@@ -207,7 +209,8 @@ let needs_type_closure (rule : t) =
     | Type_abstraction (_type_vars, rule) ->
         go rule
     | Type_closure _ ->
-        false
+      false
+    | Custom -> false
   in
   go rule
 
@@ -235,7 +238,9 @@ let rec subst_rules_for_type_vars ~module_ ~loc bindings (t : t) =
     | Native_int
     | Float
     | Vec
-    | Bigstring ->
+    | Bigstring
+    | Custom
+      ->
         t
     | Option t' ->
         go t'

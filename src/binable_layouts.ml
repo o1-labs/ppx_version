@@ -43,8 +43,8 @@ let layout_for_binable_functor_opt expr =
   match binable_result with
   | None ->
       (* for some uses of `%%versioned_binable`, like Bin_prot.Utils.Make_binable, too hard to derive
-       a layout; layouts are hand-written for those
-    *)
+         a layout; layouts are hand-written for those
+      *)
       None
   | Some (Arg1 lident) ->
       (* lident is a module name, like Stable.V1 *)
