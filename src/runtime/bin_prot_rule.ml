@@ -75,8 +75,10 @@ type t =
   | Type_abstraction of string list * t
   (* recursive parameterized type with bindings *)
   | Type_closure of (string * t) list * t
-  (* hand-written serialization *)
-  | Custom
+  (* hand-written serialization
+     the t's are Self_reference's
+  *)
+  | Custom of t list
 
 and record_field = {field_name: string; field_rule: t}
 
@@ -98,20 +100,9 @@ and rule_ref = Unresolved of unresolved | Resolved of resolved
 let to_string t = to_yojson t |> Yojson.Safe.to_string
 
 let compress_references (rule : t) =
-  let follow_ref_chain (rule : t) =
-    let rec go rule =
-      match rule with
-      | Reference (Resolved ({ref_rule=Reference (Resolved _) as inner_ref; _})) ->
-        go inner_ref
-      | Reference (Resolved {ref_rule;_}) ->
-        ref_rule
-      | _ -> rule
-    in
-    go rule
-  in
   let rec go rule =
     match rule with
-    |Nat0|Unit|Bool|String|Char|Int|Int32|Int64|Native_int|Float|Vec|Bigstring|Type_var _|Custom
+    |Nat0|Unit|Bool|String|Char|Int|Int32|Int64|Native_int|Float|Vec|Bigstring|Type_var _
     -> rule
   |Option rule' ->
     Option (go rule')
@@ -142,9 +133,9 @@ let compress_references (rule : t) =
   |Reference (Unresolved _) ->
     (* can't compress an unresolved reference *)
     rule
-  | Reference (Resolved ({ref_rule=(Reference (Resolved _) as ref_tail);_} as resolved))  ->
-    (* maintain head of Resolved chain, replace tail with rule at end of Resolved chain *)
-    go (Reference (Resolved {resolved with ref_rule = follow_ref_chain ref_tail }))
+  | Reference (Resolved {ref_rule=Reference (Resolved _) as resolved_tail;_}) ->
+    (* snip off head item from resolved chain *)
+    go resolved_tail
   | Reference (Resolved resolved) ->
     (* end of resolved chain *)
     Reference (Resolved {resolved with ref_rule = go resolved.ref_rule})
@@ -157,6 +148,8 @@ let compress_references (rule : t) =
         (nm,go rule''))
     in
     Type_closure (bindings',go rule')
+  | Custom rules ->
+    Custom (List.map rules ~f:go)
   in
   go rule
 
@@ -210,7 +203,7 @@ let needs_type_closure (rule : t) =
         go rule
     | Type_closure _ ->
       false
-    | Custom -> false
+    | Custom _ -> false
   in
   go rule
 
@@ -239,7 +232,6 @@ let rec subst_rules_for_type_vars ~module_ ~loc bindings (t : t) =
     | Float
     | Vec
     | Bigstring
-    | Custom
       ->
         t
     | Option t' ->
@@ -308,6 +300,8 @@ let rec subst_rules_for_type_vars ~module_ ~loc bindings (t : t) =
     | Self_reference _ as t ->
         (* keep type variables *)
         t
+    | Custom ts ->
+      Custom (List.map ts ~f:go)
     | Type_abstraction (type_vars, t') ->
         (* TODO : think more carefully *)
         let local_bindings =

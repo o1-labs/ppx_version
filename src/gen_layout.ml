@@ -339,9 +339,9 @@ let rec bin_prot_rule_to_expr ~loc ~type_name rule =
         [%expr
           Ppx_version_runtime.Bin_prot_rule.Type_closure
             ([%e elist bindings_exprs], [%e bin_prot_rule_expr])]
-    | Custom ->
-      [%expr Ppx_version_runtime.Bin_prot_rule.Custom]
-
+    | Custom self_refs ->
+      let self_ref_exprs = List.map self_refs ~f:go in
+      [%expr Ppx_version_runtime.Bin_prot_rule.Custom [%e elist self_ref_exprs]]
   in
   go rule
 
