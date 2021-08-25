@@ -235,7 +235,7 @@ let rec subst_rules_for_type_vars ~module_ ~loc bindings (t : t) =
       ->
         t
     | Option t' ->
-        go t'
+      Option (go t')
     | Record fields ->
         let fields' =
           List.map fields ~f:(fun field ->
