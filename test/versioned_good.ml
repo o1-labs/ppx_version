@@ -191,7 +191,7 @@ module M12 = struct
   [%%versioned
   module Stable = struct
     module V1 = struct
-      type t = int Core_kernel.Queue.Stable.V1.t [@layout Layouts.dummy]
+      type t = int Core_kernel.Queue.Stable.V1.t
 
       let to_latest = Fn.id
     end
@@ -203,7 +203,7 @@ module M13 = struct
   [%%versioned
   module Stable = struct
     module V1 = struct
-      type t = Core_kernel.Time.Stable.Span.V1.t[@layout Layouts.dummy] [@@deriving bin_io, version]
+      type t = Core_kernel.Time.Stable.Span.V1.t [@@deriving bin_io, version]
 
       let to_latest = Fn.id
     end

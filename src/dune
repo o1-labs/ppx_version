@@ -2,6 +2,6 @@
  (name ppx_version)
  (public_name ppx_version)
  (kind ppx_deriver)
- (libraries compiler-libs.common ppxlib ppx_bin_prot core_kernel ppx_version.runtime)
+ (libraries compiler-libs.common ppxlib ppx_bin_prot core_kernel)
  (ppx_runtime_libraries ppx_version.runtime)
  (preprocess (pps ppxlib.metaquot)))
