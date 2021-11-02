@@ -10,14 +10,15 @@ let mk_loc ~loc txt = { Location.loc; txt }
 let map_loc ~f { Location.loc; txt } = { Location.loc; txt = f txt }
 
 let check_modname ~loc name : string =
-  match name with
-  | "Stable" -> name
-  | _ ->
-      Location.raise_errorf ~loc
-        "Expected a module named Stable, but got a module named %s." name
+  if String.equal name "Stable" then name
+  else
+    Location.raise_errorf ~loc
+      "Expected a module named Stable, but got a module named %s." name
 
-let make_one_line_formatter formatter =
-  let out_funs = Format.(pp_get_formatter_out_functions formatter ()) in
+(* for diffing types and binable functors, replace newlines in standard formatter
+   with a space, so string is all on one line *)
+let diff_formatter =
+  let out_funs = Format.(pp_get_formatter_out_functions std_formatter ()) in
   let out_funs' =
     {
       out_funs with
@@ -26,20 +27,6 @@ let make_one_line_formatter formatter =
     }
   in
   Format.formatter_of_out_functions out_funs'
-
-let one_line_formatter, one_line_contents, clear_one_line_buf =
-  (* big enough to hold formatted type, locations *)
-  let buf_for_format = Buffer.create 4096 in
-  let formatter =
-    make_one_line_formatter (Format.formatter_of_buffer buf_for_format)
-  in
-  let contents () = Buffer.contents buf_for_format in
-  let clear () = Buffer.clear buf_for_format in
-  (formatter, contents, clear)
-
-(* for diffing types and binable functors, replace newlines in standard formatter
-   with a space, so string is all on one line *)
-let diff_formatter = make_one_line_formatter Format.std_formatter
 
 let validate_module_version module_version loc =
   let len = String.length module_version in
@@ -64,11 +51,6 @@ let validate_module_version module_version loc =
 
 let version_of_versioned_module_name name =
   String.sub name ~pos:1 ~len:(String.length name - 1) |> int_of_string
-
-(* convert type_decls to structure item so we can print it *)
-let type_decls_to_stri type_decls =
-  (* type derivers only work with recursive types *)
-  {pstr_desc= Pstr_type (Ast.Recursive, type_decls); pstr_loc= Location.none}
 
 (* modules in core and core_kernel library which are not in Core, Core_kernel modules
 
