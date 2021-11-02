@@ -19,7 +19,7 @@ jobs:
         run: |
           opam install dune ppxlib ppx_bin_prot core_kernel
           eval $(opam env)
-          ocaml --version
+          pwd
           dune build -p ppx_version
 
   run_opam_pin:
