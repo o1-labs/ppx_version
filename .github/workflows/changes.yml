@@ -19,8 +19,7 @@ jobs:
         run: |
           opam install dune ppxlib ppx_bin_prot core_kernel
           eval $(opam env)
-          pwd
-          dune build -p ppx_version
+          cd src && dune build -p ppx_version
 
   run_opam_pin:
     runs-on: ubuntu-latest
