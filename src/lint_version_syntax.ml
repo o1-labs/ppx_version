@@ -360,6 +360,8 @@ let lint_ast =
               ; "Of_binable1_with_uuid"
               ; "Of_binable2_with_uuid"
               ; "Of_binable3_with_uuid"
+              ; "Of_stringable_with_uuid"
+              ; "Of_sexpable_with_uuid"
               ]
               of_binable ~equal:String.equal ->
             let errors =

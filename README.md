@@ -48,10 +48,12 @@ let%test "V1 serialization test" =
   check_serialization (module M.Stable.V1) value known_good_digest
 ```
 
-The variant `%%versioned_binable` can be used when the functor
-`Binable.Of_binable` (or `Of_binable1`, `Of_binable2`, `Of_binable3`, or the
-equivalent `without_uuid` ones), or `Binable.Of_stringable` are used to
-provide serialization.
+The variant `%%versioned_binable` can be used when the functors
+`Binable.Of_binable`, `Of_binable1`, `Of_binable2`, `Of_binable3`,
+`Of_stringable`, or the equivalent ones whose names end in `without_uuid`,
+are used to provide serialization. The `Binable` functors whose names end in
+`with_uuid` may not be used, because their serializations may not be
+stable.
 
 A stable type in a signature:
 ```ocaml
