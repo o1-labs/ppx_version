@@ -59,7 +59,7 @@ let make_type_ext_no_op name ?str_args ?str_rw ?sig_args ?sig_rw () =
 
 let register_dummies () =
   let register_dummy_type_decl_derivers () =
-    let derivers = ["dhall_type";"hlist";"to_enum";"to_representatives"] in
+    let derivers = ["dhall_type";"hlist";"to_enum";"to_representatives";"annot"] in
     (* for structures only, not for signatures *)
     Core_kernel.List.iter derivers ~f:(fun name -> make_type_decl_no_op name ~str_args:Args.empty ~str_rw:type_decl_rw0 ())
   in
