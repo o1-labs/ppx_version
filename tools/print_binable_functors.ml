@@ -31,11 +31,18 @@ let is_included_binable_functor_app (inc_decl : include_declaration) =
     | Some ftor ->
         List.mem
           [ "Of_binable"
+          ; "Of_binable_without_uuid"
           ; "Of_binable1"
+          ; "Of_binable1_without_uuid"
           ; "Of_binable2"
+          ; "Of_binable2_without_uuid"
           ; "Of_binable3"
+          ; "Of_binable3_without_uuid"
           ; "Of_sexpable"
-          ; "Of_stringable" ]
+          ; "Of_sexpable_without_uuid"
+          ; "Of_stringable"
+          ; "Of_stringable_without_uuid"
+          ]
           ftor ~equal:String.equal
     | _ ->
         false

@@ -49,8 +49,9 @@ let%test "V1 serialization test" =
 ```
 
 The variant `%%versioned_binable` can be used when the functor
-`Binable.Of_binable` (or `Of_binable1`, `Of_binable2`, `Of_binable3`), or
-`Binable.Of_stringable` are used to provide serialization.
+`Binable.Of_binable` (or `Of_binable1`, `Of_binable2`, `Of_binable3`, or the
+equivalent `without_uuid` ones), or `Binable.Of_stringable` are used to
+provide serialization.
 
 A stable type in a signature:
 ```ocaml

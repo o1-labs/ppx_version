@@ -311,8 +311,12 @@ let lint_ast =
               ; _ }
             , _ )
           when List.mem
-                 ["Of_binable"; "Of_binable1"; "Of_binable2"; "Of_binable3"]
-                 of_binable ~equal:String.equal ->
+              [ "Of_binable"; "Of_binable_without_uuid"
+              ; "Of_binable1"; "Of_binable1_without_uuid"
+              ; "Of_binable2"; "Of_binable2_without_uuid"
+              ; "Of_binable3"; "Of_binable3_without_uuid"
+              ]
+              of_binable ~equal:String.equal ->
             let include_errors =
               if acc.in_include then []
               else
@@ -340,6 +344,31 @@ let lint_ast =
             in
             acc_with_accum_errors acc
               (include_errors @ path_errors @ arg_errors)
+        | Pmod_apply
+            ( { pmod_desc=
+                  Pmod_apply
+                    ( { pmod_desc=
+                          Pmod_ident
+                            {txt= Ldot (Lident "Binable", of_binable); _}
+                      ; _ }
+                    , _ )
+              ; pmod_loc
+              ; _ }
+            , _ )
+          when List.mem
+              [ "Of_binable_with_uuid"
+              ; "Of_binable1_with_uuid"
+              ; "Of_binable2_with_uuid"
+              ; "Of_binable3_with_uuid"
+              ]
+              of_binable ~equal:String.equal ->
+            let errors =
+              [ ( pmod_loc
+                , sprintf
+                    "Binable.%s application not allowed, serialization may be unstable"
+                    of_binable ) ]
+            in
+            acc_with_accum_errors acc errors
         | Pmod_apply
             ( { pmod_desc= Pmod_ident {txt= Ldot (Lident "Binable", ftor); _}
               ; pmod_loc
