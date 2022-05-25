@@ -12,7 +12,8 @@
             ppx_fields_conv
             ppx_hash
             ppx_variants_conv
-            ppx_deriving_yojson)
+            ppx_deriving_yojson
+            base_quickcheck.ppx_quickcheck)
  (preprocess (pps ppxlib.metaquot)))
 
 (executable
@@ -29,5 +30,6 @@
             ppx_fields_conv
             ppx_hash
             ppx_variants_conv
-            ppx_deriving_yojson)
+            ppx_deriving_yojson
+            base_quickcheck.ppx_quickcheck)
  (preprocess (pps ppxlib.metaquot)))
