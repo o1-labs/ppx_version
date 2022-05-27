@@ -136,13 +136,14 @@ module Printing = struct
     (* type derivers only work with recursive types *)
     {pstr_desc= Pstr_type (Ast.Recursive, type_decls); pstr_loc= Location.none}
 
-  (* prints module_path:type_definition *)
+  (* prints path_to_type:type_definition *)
   let print_type ~loc:_ ~path (_rec_flag, type_decls) _rpc _asserted _binable =
     let module_path = module_path_list path in
     let path_len = List.length module_path in
     List.iteri module_path ~f:(fun i s ->
         printf "%s" s ;
         if i < path_len - 1 then printf "." ) ;
+    printf ".%s" (List.hd_exn type_decls).ptype_name.txt;
     printf ":%!" ;
     let type_decls_filtered_attrs =
       List.map type_decls ~f:filter_type_decls_attrs
