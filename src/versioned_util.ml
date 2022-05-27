@@ -9,6 +9,8 @@ let mk_loc ~loc txt = { Location.loc; txt }
 
 let map_loc ~f { Location.loc; txt } = { Location.loc; txt = f txt }
 
+let some_loc (x : 'a loc) = map_loc ~f:Option.some x
+
 let check_modname ~loc name : string =
   if String.equal name "Stable" then name
   else

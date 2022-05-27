@@ -246,7 +246,7 @@ let version_type ~version_option version stri =
     let create = [%stri let create t = {t; version= [%e eint version]}] in
     pstr_module
       (module_binding
-         ~name:(Located.mk "With_version")
+         ~name:(some_loc (Located.mk "With_version"))
          ~expr:
            (pmod_structure
               [pstr_type Recursive [typ]; pstr_type Recursive [t]; create]))
@@ -398,7 +398,7 @@ let version_type ~version_option version stri =
 let convert_module_stri ~version_option last_version stri =
   let module_pattern =
     Ast_pattern.(
-      pstr_module (module_binding ~name:__' ~expr:(pmod_structure __')))
+      pstr_module (module_binding ~name:(some __') ~expr:(pmod_structure __')))
   in
   let loc = stri.pstr_loc in
   let name, str =
@@ -425,7 +425,7 @@ let convert_module_stri ~version_option last_version stri =
           "Expected a type declaration in this structure."
     | ({ pstr_desc=
           Pstr_module
-            { pmb_name= {txt= "T"; _}
+            { pmb_name= {txt= Some "T"; _}
             ; pmb_expr= {pmod_desc= Pmod_structure (type_stri :: _); _}
             ; _ }
       ; _ } as stri)
@@ -445,7 +445,7 @@ let convert_module_stri ~version_option last_version stri =
   let open Ast_builder.Default in
   ( version
   , pstr_module ~loc
-      (module_binding ~loc ~name
+      (module_binding ~loc ~name:(some_loc name)
          ~expr:
            (pmod_structure ~loc:str.loc
               (type_str @ str_rest @ with_version_bin_io_shadows)))
@@ -468,7 +468,7 @@ let convert_modbody ~loc ~version_option body =
           (* verify that last module is named Tests *)
           let tests_str_item = List.hd_exn tests in
           ( match tests_str_item.pstr_desc with
-          | Pstr_module {pmb_name= {txt= "Tests"; _}; _} ->
+          | Pstr_module {pmb_name= {txt= Some "Tests"; _}; _} ->
               ()
           | _ ->
               Location.raise_errorf ~loc:tests_str_item.pstr_loc
@@ -508,7 +508,7 @@ let convert_modbody ~loc ~version_option body =
         let open Ast_builder in
         let latest =
           pstr_module
-            (module_binding ~name:(Located.mk "Latest")
+            (module_binding ~name:(some_loc (Located.mk "Latest"))
                ~expr:
                  (pmod_ident (Located.lident (sprintf "V%i" latest_version))))
         in
@@ -594,7 +594,7 @@ let version_module ~loc ~version_option ~path:_ modname modbody =
       (Incl.mk ~loc
          (Ast_helper.Mod.structure ~loc
             ( Str.module_ ~loc
-                (Mb.mk ~loc:modname.loc modname
+                (Mb.mk ~loc:modname.loc (some_loc modname)
                    (Mod.structure ~loc:modbody.loc modbody.txt))
             :: type_stri )))
   with exn ->
@@ -684,18 +684,18 @@ let convert_module_decls ~loc:_ signature =
       {latest; last; convertible; sigitems; extra_sigitems; no_toplevel_latest}
       sigitem =
     match sigitem.psig_desc with
-    | Psig_module ({pmd_name; pmd_type; _} as pmd) ->
-        validate_module_version pmd_name.txt pmd_name.loc ;
-        let version = version_of_versioned_module_name pmd_name.txt in
+    | Psig_module ({pmd_name = {txt = Some name; loc}; pmd_type; _} as pmd) ->
+        validate_module_version name loc ;
+        let version = version_of_versioned_module_name name in
         Option.iter last ~f:(fun n ->
             if Int.equal version n then
-              Location.raise_errorf ~loc:pmd_name.loc
+              Location.raise_errorf ~loc
                 "Duplicate versions in versioned modules" ;
             if Int.( > ) version n then
-              Location.raise_errorf ~loc:pmd_name.loc
+              Location.raise_errorf ~loc
                 "Versioned modules must be listed in decreasing order" ) ;
         let in_latest = Option.is_none latest in
-        let latest = if in_latest then Some pmd_name.txt else latest in
+        let latest = if in_latest then Some name else latest in
         let {module_type; convertible= module_convertible; extra_items} =
           convert_module_type pmd_type
         in
@@ -737,7 +737,7 @@ let version_module_decl ~loc ~path:_ modname signature =
       map_loc ~f:(convert_module_decls ~loc:signature.loc) signature
     in
     let mk_module_decl name ty_desc =
-      Sig.mk ~loc (Psig_module (Md.mk ~loc name (Mty.mk ~loc ty_desc)))
+      Sig.mk ~loc (Psig_module (Md.mk ~loc (some_loc name) (Mty.mk ~loc ty_desc)))
     in
     let signature =
       match latest with
@@ -794,7 +794,7 @@ let () =
   let module_ast_pattern =
     Ast_pattern.(
       pstr
-        ( pstr_module (module_binding ~name:__' ~expr:(pmod_structure __'))
+        ( pstr_module (module_binding ~name:(some __') ~expr:(pmod_structure __'))
         ^:: nil ))
   in
   let module_extension =
@@ -815,7 +815,7 @@ let () =
   let module_decl_ast_pattern =
     Ast_pattern.(
       psig
-        ( psig_module (module_declaration ~name:__' ~type_:(pmty_signature __'))
+        ( psig_module (module_declaration ~name:(some __') ~type_:(pmty_signature __'))
         ^:: nil ))
   in
   let module_decl_extension =

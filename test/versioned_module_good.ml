@@ -157,7 +157,7 @@ module M5 = struct
         let of_binable = Fn.id
       end
 
-      include Binable.Of_binable (Core_kernel.Bool.Stable.V1) (Arg)
+      include Binable.Of_binable_without_uuid (Core_kernel.Bool.Stable.V1) (Arg)
     end
   end]
 end

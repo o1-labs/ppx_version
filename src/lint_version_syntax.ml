@@ -297,7 +297,7 @@ let lint_ast =
       let acc' =
         match expr.pmod_desc with
         (* don't match special case of functor with () argument *)
-        | Pmod_functor (_label, Some _mty, body) ->
+        | Pmod_functor (Named _, body) ->
             self#module_expr body {acc with in_functor= true}
         | Pmod_apply
             ( { pmod_desc=
@@ -427,10 +427,10 @@ let lint_ast =
 
     method! structure_item str acc =
       match str.pstr_desc with
-      | Pstr_module {pmb_name; pmb_expr; _} ->
+      | Pstr_module {pmb_name = {txt = Some name; _}; pmb_expr; _} ->
           let acc' =
             self#module_expr pmb_expr
-              {acc with module_path= pmb_name.txt :: acc.module_path}
+              {acc with module_path= name :: acc.module_path}
           in
           acc_with_errors acc acc'.errors
       | Pstr_type (rec_flag, type_decls) ->
