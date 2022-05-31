@@ -87,10 +87,8 @@ let validate_type_decl inner2_modules type_decl =
       ()
 
 let ctxt_base =
-  let omp_config =
-    Migrate_parsetree.Driver.make_config ~tool_name:"ppxlib_driver" ()
-  in
-  Expansion_context.Base.top_level ~omp_config ~file_path:""
+  Expansion_context.Base.top_level ~tool_name:"ppxlib_driver" ~file_path:""
+    ~input_name:""
 
 let rewrite_to_bin_io ~loc ~path (_rec_flag, type_decls) =
   let type_decl1 = List.hd_exn type_decls in

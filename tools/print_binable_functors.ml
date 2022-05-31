@@ -79,10 +79,10 @@ let traverse_ast =
 
     method! structure_item stri acc =
       match stri.pstr_desc with
-      | Pstr_module {pmb_name; pmb_expr; _} ->
+      | Pstr_module {pmb_name = {txt = Some name; _}; pmb_expr; _} ->
           ignore
             (self#module_expr pmb_expr
-               {module_path= pmb_name.txt :: acc.module_path}) ;
+               {module_path= name :: acc.module_path}) ;
           acc
       | Pstr_extension ((name, _payload), _attrs)
         when List.mem
